@@ -1,0 +1,61 @@
+### Maven ###
+target/
+pom.xml.versionsBackup
+.mvn/wrapper/maven-wrapper.jar
+
+### Java ###
+*.class
+*.jar
+*.war
+hs_err_pid*
+replay_pid*
+
+### Secrets ###
+secrets/
+
+### Local only ###
+.editorconfig
+
+### Local environment ###
+.env
+.env.local
+
+### Tooling output ###
+.sonar/
+.scannerwork/
+*.log
+
+### Editors ###
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# Emacs: backups, auto-saves, lock symlinks
+*~
+\#*\#
+.\#*
+*.elc
+auto-save-list/
+tramp
+.org-id-locations
+*_archive
+flycheck_*.el
+
+# Vim
+*.swp
+*.swo
+Session.vim
+
+# Patch and merge leftovers
+*.orig
+*.rej
+
+### OS ###
+.DS_Store
+Thumbs.db
