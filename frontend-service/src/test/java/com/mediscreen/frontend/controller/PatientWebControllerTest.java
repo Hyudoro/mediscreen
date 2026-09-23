@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.mediscreen.frontend.client.PatientClient;
+import com.mediscreen.frontend.config.WebSecurityConfig;
 import com.mediscreen.frontend.dto.PatientPage;
 import com.mediscreen.frontend.dto.PatientView;
 import java.time.LocalDate;
@@ -17,11 +18,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 @WebMvcTest(PatientWebController.class)
+@Import(WebSecurityConfig.class)
 @DisplayName("The patient screens")
 class PatientWebControllerTest {
 
@@ -33,6 +36,17 @@ class PatientWebControllerTest {
 
     @MockitoBean
     private PatientClient client;
+
+    @Nested
+    @DisplayName("when nobody is signed in")
+    class Anonymous {
+
+        @Test
+        @DisplayName("sends the visitor to the login page")
+        void redirectsToLogin() {
+            assertThat(mvc.get().uri("/patients")).hasStatus3xxRedirection();
+        }
+    }
 
     @Nested
     @DisplayName("when signed in")

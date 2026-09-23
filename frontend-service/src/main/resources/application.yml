@@ -15,6 +15,9 @@ mediscreen:
     uri: http://localhost:9000
     username: mediscreen-service
     password: ${service-password}
+  ui:
+    username: practitioner
+    password-hash: ${ui-password-hash}
 
 logging:
   structured:
