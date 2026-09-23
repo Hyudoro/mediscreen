@@ -1,3 +1,14 @@
 spring:
   application:
     name: gateway-service
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 9000
+
+logging:
+  structured:
+    format:
+      console: ecs
