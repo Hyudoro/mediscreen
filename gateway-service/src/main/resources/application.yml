@@ -4,11 +4,33 @@ spring:
   threads:
     virtual:
       enabled: true
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: patient-service
+              uri: ${mediscreen.services.patient-uri}
+              predicates:
+                - Path=/api/v1/patients/**
 
 server:
   port: 9000
+
+mediscreen:
+  services:
+    patient-uri: http://localhost:8081
 
 logging:
   structured:
     format:
       console: ecs
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+mediscreen:
+  services:
+    patient-uri: http://patient-service:8081
