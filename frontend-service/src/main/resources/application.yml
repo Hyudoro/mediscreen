@@ -8,7 +8,30 @@ spring:
 server:
   port: 8080
 
+mediscreen:
+  gateway:
+    uri: http://localhost:9000
+    username: mediscreen-service
+    password: ${service-password}
+
 logging:
   structured:
     format:
       console: ecs
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configtree:/run/secrets/"
+mediscreen:
+  gateway:
+    uri: http://gateway-service:9000

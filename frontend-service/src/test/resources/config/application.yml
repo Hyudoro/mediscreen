@@ -1,0 +1,5 @@
+mediscreen:
+  gateway:
+    uri: http://localhost:9999
+    username: test-service
+    password: test-password
