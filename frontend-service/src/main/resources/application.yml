@@ -4,6 +4,8 @@ spring:
   threads:
     virtual:
       enabled: true
+  thymeleaf:
+    cache: false
 
 server:
   port: 8080
@@ -32,6 +34,8 @@ spring:
     activate:
       on-profile: docker
     import: "optional:configtree:/run/secrets/"
+  thymeleaf:
+    cache: true
 mediscreen:
   gateway:
     uri: http://gateway-service:9000
