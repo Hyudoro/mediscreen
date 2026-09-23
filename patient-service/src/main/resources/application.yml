@@ -17,6 +17,11 @@ spring:
 server:
   port: 8081
 
+mediscreen:
+  security:
+    username: mediscreen-service
+    password-hash: ${service-password-hash}
+
 logging:
   structured:
     format:
@@ -28,15 +33,15 @@ spring:
   config:
     activate:
       on-profile: dev
-    import: "optional:configtree:./secrets/"
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
   datasource:
     password: ${postgres-password}
   flyway:
     locations: classpath:db/migration,classpath:db/seed
 
 ---
-# In the compose stack: secrets are mounted as files, so spring.datasource.password
-# resolves from /run/secrets/ with no placeholder at all.
+# In the compose stack: secrets are mounted as files and read as a config tree, so
+# no password ever enters the process environment.
 spring:
   config:
     activate:
@@ -44,5 +49,6 @@ spring:
     import: "optional:configtree:/run/secrets/"
   datasource:
     url: jdbc:postgresql://postgres:5432/mediscreen
+    password: ${postgres-password}
   flyway:
     locations: classpath:db/migration,classpath:db/seed
