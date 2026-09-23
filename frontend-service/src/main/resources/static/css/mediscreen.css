@@ -1,0 +1,187 @@
+/* Hand-written, served locally, no framework and no web font: the whole sheet is
+   a couple of kilobytes and the pages carry no JavaScript at all. */
+
+:root {
+    --ink: #1c2530;
+    --muted: #5d6b7a;
+    --line: #d7dee5;
+    --ground: #f7f9fb;
+    --accent: #1f6f8b;
+    --error: #a3251f;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--ground);
+}
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+}
+
+.brand {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+main {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+h1 {
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+a {
+    color: var(--accent);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid var(--line);
+}
+
+th, td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+}
+
+th {
+    background: var(--ground);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+dl {
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 1rem 1.25rem;
+    margin: 0 0 1rem;
+}
+
+dt {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+}
+
+dt:first-child {
+    margin-top: 0;
+}
+
+dd {
+    margin: 0.15rem 0 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    max-width: 28rem;
+}
+
+label {
+    margin-top: 0.85rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.hint {
+    font-style: italic;
+}
+
+input, select {
+    padding: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font: inherit;
+    background: #fff;
+}
+
+button, .button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logout button {
+    margin: 0;
+    padding: 0.3rem 0.7rem;
+    background: none;
+    color: var(--accent);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.error {
+    color: var(--error);
+    margin: 0.3rem 0 0;
+    font-size: 0.9rem;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--muted);
+}
+
+.centered {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 1.5rem 2rem 2rem;
+    width: 22rem;
+}
