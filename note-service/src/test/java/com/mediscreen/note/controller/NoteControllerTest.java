@@ -6,11 +6,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+import com.mediscreen.note.config.SecurityConfig;
 import com.mediscreen.note.dto.NoteRequest;
 import com.mediscreen.note.dto.NoteResponse;
 import com.mediscreen.note.service.NoteService;
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +32,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 @WebMvcTest(NoteController.class)
+@Import(SecurityConfig.class)
 @DisplayName("The note endpoint")
 class NoteControllerTest {
 
@@ -55,6 +57,19 @@ class NoteControllerTest {
         @DisplayName("answers 401 rather than serving notes")
         void refusesToList() {
             assertThat(mvc.get().uri("/api/v1/notes?patientId=1")).hasStatus(HttpStatus.UNAUTHORIZED);
+        }
+
+        @Test
+        @DisplayName("answers 401 rather than adding a note")
+        void refusesToAdd() {
+            assertThat(mvc.post()
+                            .uri("/api/v1/notes")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"patientId":1,"patient":"TestNone","note":"Poids"}
+                                    """))
+                    .hasStatus(HttpStatus.UNAUTHORIZED);
+            then(service).should(never()).add(any());
         }
     }
 
@@ -103,8 +118,7 @@ class NoteControllerTest {
                             .content("""
                                     {"patientId":1,"patient":"TestNone","note":"Poids égal ou inférieur"}
                                     """)
-                            .with(user("tester"))
-                            .with(csrf())))
+                            .with(user("tester"))))
                     .hasStatus(HttpStatus.CREATED)
                     .bodyJson()
                     .extractingPath("$.id")
@@ -121,8 +135,7 @@ class NoteControllerTest {
                             .content("""
                                     {"patientId":1,"patient":"TestNone","note":"  Première ligne\\nDeuxième ligne  \\r\\n"}
                                     """)
-                            .with(user("tester"))
-                            .with(csrf())))
+                            .with(user("tester"))))
                     .hasStatus(HttpStatus.CREATED);
 
             var request = ArgumentCaptor.forClass(NoteRequest.class);
@@ -139,8 +152,7 @@ class NoteControllerTest {
             assertThat(mvc.perform(post("/api/v1/notes")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"patientId\":1,\"patient\":\"TestNone\",\"note\":\"" + longNote + "\"}")
-                            .with(user("tester"))
-                            .with(csrf())))
+                            .with(user("tester"))))
                     .hasStatus(HttpStatus.CREATED);
 
             var request = ArgumentCaptor.forClass(NoteRequest.class);
@@ -156,8 +168,7 @@ class NoteControllerTest {
                             .content("""
                                     {"patientId":1,"patient":"TestNone","note":"   "}
                                     """)
-                            .with(user("tester"))
-                            .with(csrf())))
+                            .with(user("tester"))))
                     .hasStatus(HttpStatus.BAD_REQUEST)
                     .bodyJson()
                     .extractingPath("$.errors.note")
@@ -171,8 +182,7 @@ class NoteControllerTest {
             assertThat(mvc.perform(post("/api/v1/notes")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("Poids anormal")
-                            .with(user("tester"))
-                            .with(csrf())))
+                            .with(user("tester"))))
                     .hasStatus(HttpStatus.BAD_REQUEST)
                     .hasContentType(MediaType.APPLICATION_PROBLEM_JSON)
                     .bodyJson()

@@ -18,6 +18,11 @@ spring:
 server:
   port: 8082
 
+mediscreen:
+  security:
+    username: mediscreen-service
+    password-hash: ${service-password-hash}
+
 logging:
   structured:
     format:
