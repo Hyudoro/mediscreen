@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: frontend-service
+  threads:
+    virtual:
+      enabled: true
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
+
+mediscreen:
+  gateway:
+    uri: http://localhost:9000
+    username: mediscreen-service
+    password: ${service-password}
+  ui:
+    username: practitioner
+    password-hash: ${ui-password-hash}
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configtree:/run/secrets/"
+  thymeleaf:
+    cache: true
+mediscreen:
+  gateway:
+    uri: http://gateway-service:9000

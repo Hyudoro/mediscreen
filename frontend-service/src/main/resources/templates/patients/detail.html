@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mediscreen - Patient</title>
+    <link rel="stylesheet" th:href="@{/css/mediscreen.css}">
+</head>
+<body>
+<header>
+    <a class="brand" th:href="@{/patients}">Mediscreen</a>
+    <form th:action="@{/logout}" method="post" class="logout">
+        <button type="submit">Sign out</button>
+    </form>
+</header>
+<main>
+    <div class="row">
+        <h1 th:text="${patient.firstName} + ' ' + ${patient.lastName}">Patient</h1>
+        <a class="button" th:href="@{/patients/{id}/edit(id=${patient.id})}">Update</a>
+    </div>
+
+    <dl>
+        <dt>First name</dt>
+        <dd th:text="${patient.firstName}">First</dd>
+        <dt>Last name</dt>
+        <dd th:text="${patient.lastName}">Last</dd>
+        <dt>Birth date</dt>
+        <dd th:text="${patient.birthDate}">Date</dd>
+        <dt>Gender</dt>
+        <dd th:text="${patient.gender}">F</dd>
+        <dt>Postal address</dt>
+        <dd th:text="${patient.street} ?: 'Not recorded'">Street</dd>
+        <dt>Phone number</dt>
+        <dd th:text="${patient.phoneNumber} ?: 'Not recorded'">Phone</dd>
+    </dl>
+
+    <p><a th:href="@{/patients}">Back to the list</a></p>
+</main>
+</body>
+</html>

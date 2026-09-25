@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mediscreen - Patients</title>
+    <link rel="stylesheet" th:href="@{/css/mediscreen.css}">
+</head>
+<body>
+<header>
+    <a class="brand" th:href="@{/patients}">Mediscreen</a>
+    <form th:action="@{/logout}" method="post" class="logout">
+        <button type="submit">Sign out</button>
+    </form>
+</header>
+<main>
+    <div class="row">
+        <h1>Patients</h1>
+        <a class="button" th:href="@{/patients/new}">Add a patient</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Last name</th>
+            <th>First name</th>
+            <th>Birth date</th>
+            <th>Gender</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="patient : ${patients.content}">
+            <td><a th:href="@{/patients/{id}(id=${patient.id})}" th:text="${patient.lastName}">Name</a></td>
+            <td th:text="${patient.firstName}">First</td>
+            <td th:text="${patient.birthDate}">Date</td>
+            <td th:text="${patient.gender}">F</td>
+        </tr>
+        <tr th:if="${patients.content.isEmpty()}">
+            <td colspan="4">No patients yet.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav class="pager" th:if="${patients.totalPages > 1}">
+        <a th:if="${patients.hasPrevious()}" th:href="@{/patients(page=${patients.number - 1})}">Previous</a>
+        <span th:text="'Page ' + (${patients.number} + 1) + ' of ' + ${patients.totalPages}">Page</span>
+        <a th:if="${patients.hasNext()}" th:href="@{/patients(page=${patients.number + 1})}">Next</a>
+    </nav>
+</main>
+</body>
+</html>

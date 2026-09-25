@@ -1,25 +1,23 @@
 # Normalisation to 3NF
 
 Abernathy Clinic needs the patient database normalised to third normal form as
-part of an ISO certification. This file lists the attributes, the functional
-dependencies and the reasoning for each normal form, so the claim can be checked
-against the schema instead of taken on trust.
+part of an ISO certification. Here is basically the proof.
 
 It covers the relational database owned by patient-service. The Mongo collection
-owned by note-service is dealt with in section 6.
+owned by note-service is in section 6.
 
 ## 1. Attributes
 
 The patient record as the clinic supplied it:
 
-| Attribute | Example |
-|-----------|---------|
-| Last name | TestNone |
-| First name | Test |
-| Birth date | 1966-12-31 |
-| Gender | F |
-| Address | 1 Brookside St |
-| Phone number | 100-222-3333 |
+| Attribute    | Example        |
+|--------------|----------------|
+| Last name    | TestNone       |
+| First name   | Test           |
+| Birth date   | 1966-12-31     |
+| Gender       | F              |
+| Address      | 1 Brookside St |
+| Phone number | 100-222-3333   |
 
 The address and the phone number are optional. The other four are required.
 

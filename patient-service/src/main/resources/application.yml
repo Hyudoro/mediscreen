@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: patient-service
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mediscreen
+    username: mediscreen
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  port: 8081
+
+mediscreen:
+  security:
+    username: mediscreen-service
+    password-hash: ${service-password-hash}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+---
+# Local development: the databases run in Docker, the service runs on the host.
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
+  datasource:
+    password: ${postgres-password}
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
+
+---
+# In the compose stack: secrets are mounted as files and read as a config tree, so
+# no password ever enters the process environment.
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configtree:/run/secrets/"
+  datasource:
+    url: jdbc:postgresql://postgres:5432/mediscreen
+    password: ${postgres-password}
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
