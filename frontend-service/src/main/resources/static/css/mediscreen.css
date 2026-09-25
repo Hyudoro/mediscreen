@@ -129,7 +129,7 @@ label {
     font-style: italic;
 }
 
-input, select {
+input, select, textarea {
     padding: 0.5rem;
     border: 1px solid var(--line);
     border-radius: 2px;
@@ -157,6 +157,10 @@ button, .button {
     color: var(--accent);
 }
 
+textarea {
+    resize: vertical;
+}
+
 .actions {
     display: flex;
     align-items: center;
@@ -167,6 +171,11 @@ button, .button {
     color: var(--error);
     margin: 0.3rem 0 0;
     font-size: 0.9rem;
+}
+
+.note-form {
+    max-width: 40rem;
+    margin-bottom: 1.5rem;
 }
 
 .note {

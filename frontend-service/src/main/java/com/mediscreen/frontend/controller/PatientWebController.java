@@ -2,6 +2,8 @@ package com.mediscreen.frontend.controller;
 
 import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
+import com.mediscreen.frontend.dto.NoteForm;
+import com.mediscreen.frontend.dto.NoteRequest;
 import com.mediscreen.frontend.dto.PatientForm;
 import com.mediscreen.frontend.dto.PatientView;
 import jakarta.validation.Valid;
@@ -40,7 +42,18 @@ public class PatientWebController {
 
     @GetMapping("/patients/{id}")
     public String detail(@PathVariable long id, @RequestParam(defaultValue = "0") int page, Model model) {
+        model.addAttribute("noteForm", new NoteForm());
         return detailPage(patientClient.get(id), page, model);
+    }
+
+    @PostMapping("/patients/{id}/notes")
+    public String addNote(@PathVariable long id, @Valid NoteForm noteForm, BindingResult binding, Model model) {
+        var patient = patientClient.get(id);
+        if (binding.hasErrors()) {
+            return detailPage(patient, 0, model);
+        }
+        noteClient.add(new NoteRequest(id, patient.lastName(), noteForm.getNote()));
+        return "redirect:/patients/" + id;
     }
 
     @GetMapping("/patients/new")

@@ -1,7 +1,10 @@
 package com.mediscreen.frontend.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,6 +14,7 @@ import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
 import com.mediscreen.frontend.config.WebSecurityConfig;
 import com.mediscreen.frontend.dto.NotePage;
+import com.mediscreen.frontend.dto.NoteRequest;
 import com.mediscreen.frontend.dto.NoteView;
 import com.mediscreen.frontend.dto.PatientPage;
 import com.mediscreen.frontend.dto.PatientView;
@@ -92,7 +96,7 @@ class PatientWebControllerTest {
         @Test
         @DisplayName("accepts a new patient with no address and no phone number")
         void acceptsOptionalFieldsMissing() {
-            given(client.create(org.mockito.ArgumentMatchers.any())).willReturn(TEST_NONE);
+            given(client.create(any())).willReturn(TEST_NONE);
 
             assertThat(mvc.perform(post("/patients")
                             .param("firstName", "Jane")
@@ -148,6 +152,40 @@ class PatientWebControllerTest {
                     .bodyText()
                     .contains("Première ligne\nDeuxième &lt;b&gt;ligne&lt;/b&gt;")
                     .doesNotContain("<b>ligne</b>");
+        }
+
+        @Test
+        @DisplayName("adds a note exactly as typed and returns to the patient page")
+        void addsANote() {
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            var text = "Première ligne\r\n  Deuxième ligne  ";
+
+            assertThat(mvc.perform(post("/patients/2/notes")
+                            .param("note", text)
+                            .with(user("tester"))
+                            .with(csrf())))
+                    .hasStatus(HttpStatus.FOUND)
+                    .hasRedirectedUrl("/patients/2");
+
+            then(noteClient).should().add(new NoteRequest(2L, "TestBorderline", text));
+        }
+
+        @Test
+        @DisplayName("redisplays the patient page when the note is blank")
+        void refusesABlankNote() {
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
+
+            assertThat(mvc.perform(post("/patients/2/notes")
+                            .param("note", "   ")
+                            .with(user("tester"))
+                            .with(csrf())))
+                    .hasStatusOk()
+                    .bodyText()
+                    .contains("TestBorderline")
+                    .contains("must not be blank");
+
+            then(noteClient).should(never()).add(any());
         }
     }
 }

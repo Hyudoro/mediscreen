@@ -37,6 +37,16 @@
     <section>
         <h2>Notes</h2>
 
+        <form class="note-form" th:object="${noteForm}" method="post"
+              th:action="@{/patients/{id}/notes(id=${patient.id})}">
+            <label for="note">New note</label>
+            <textarea id="note" th:field="*{note}" rows="6" required></textarea>
+            <p class="error" th:if="${#fields.hasErrors('note')}" th:errors="*{note}">error</p>
+            <div class="actions">
+                <button type="submit">Add the note</button>
+            </div>
+        </form>
+
         <p th:if="${notes.content.isEmpty()}">No notes yet.</p>
         <article class="note" th:each="entry : ${notes.content}">
             <p class="note-date" th:text="${#temporals.format(entry.createdAt, 'yyyy-MM-dd HH:mm')}">Date</p>
