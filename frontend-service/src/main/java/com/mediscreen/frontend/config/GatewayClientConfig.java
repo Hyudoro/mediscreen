@@ -1,5 +1,6 @@
 package com.mediscreen.frontend.config;
 
+import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -19,7 +20,9 @@ import org.springframework.web.service.registry.ImportHttpServices;
  */
 @Configuration
 @EnableConfigurationProperties(GatewayProperties.class)
-@ImportHttpServices(group = "gateway", types = PatientClient.class)
+@ImportHttpServices(
+        group = "gateway",
+        types = {PatientClient.class, NoteClient.class})
 public class GatewayClientConfig {
 
     @Bean
