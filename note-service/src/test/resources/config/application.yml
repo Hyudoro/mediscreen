@@ -1,5 +1,5 @@
 # Tests never read the mounted secrets. This stand-in account only lets the
-# context start; no test signs in with it, the slice tests use a mock user.
+# context start; the slice tests use a mock user and NoteApiIT sets a real hash.
 mediscreen:
   security:
     username: test-service
