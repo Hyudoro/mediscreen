@@ -25,6 +25,7 @@ services:
       - mongo-password
     volumes:
       - mongo-data:/data/db
+      - ./note-service/mongo-init:/docker-entrypoint-initdb.d:ro
     networks:
       - app
     ports:
