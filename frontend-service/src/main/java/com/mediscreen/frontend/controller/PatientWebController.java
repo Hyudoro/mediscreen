@@ -1,7 +1,9 @@
 package com.mediscreen.frontend.controller;
 
+import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
 import com.mediscreen.frontend.dto.PatientForm;
+import com.mediscreen.frontend.dto.PatientView;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,16 +13,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-/** The patient screens: list, detail, add and update. */
+/** The patient screens: list, detail with the patient's notes, add and update. */
 @Controller
 public class PatientWebController {
 
     private static final int PAGE_SIZE = 20;
 
-    private final PatientClient client;
+    private final PatientClient patientClient;
+    private final NoteClient noteClient;
 
-    public PatientWebController(PatientClient client) {
-        this.client = client;
+    public PatientWebController(PatientClient patientClient, NoteClient noteClient) {
+        this.patientClient = patientClient;
+        this.noteClient = noteClient;
     }
 
     @GetMapping("/")
@@ -30,14 +34,13 @@ public class PatientWebController {
 
     @GetMapping("/patients")
     public String list(@RequestParam(defaultValue = "0") int page, Model model) {
-        model.addAttribute("patients", client.list(page, PAGE_SIZE));
+        model.addAttribute("patients", patientClient.list(page, PAGE_SIZE));
         return "patients/list";
     }
 
     @GetMapping("/patients/{id}")
-    public String detail(@PathVariable long id, Model model) {
-        model.addAttribute("patient", client.get(id));
-        return "patients/detail";
+    public String detail(@PathVariable long id, @RequestParam(defaultValue = "0") int page, Model model) {
+        return detailPage(patientClient.get(id), page, model);
     }
 
     @GetMapping("/patients/new")
@@ -53,13 +56,13 @@ public class PatientWebController {
             model.addAttribute("patientId", null);
             return "patients/form";
         }
-        var created = client.create(patientForm);
+        var created = patientClient.create(patientForm);
         return "redirect:/patients/" + created.id();
     }
 
     @GetMapping("/patients/{id}/edit")
     public String editForm(@PathVariable long id, Model model) {
-        model.addAttribute("patientForm", PatientForm.from(client.get(id)));
+        model.addAttribute("patientForm", PatientForm.from(patientClient.get(id)));
         model.addAttribute("patientId", id);
         return "patients/form";
     }
@@ -70,7 +73,13 @@ public class PatientWebController {
             model.addAttribute("patientId", id);
             return "patients/form";
         }
-        client.update(id, patientForm);
+        patientClient.update(id, patientForm);
         return "redirect:/patients/" + id;
+    }
+
+    private String detailPage(PatientView patient, int notesPage, Model model) {
+        model.addAttribute("patient", patient);
+        model.addAttribute("notes", noteClient.list(patient.id(), notesPage, PAGE_SIZE));
+        return "patients/detail";
     }
 }

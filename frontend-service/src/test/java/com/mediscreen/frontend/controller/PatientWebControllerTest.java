@@ -7,10 +7,14 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
 import com.mediscreen.frontend.config.WebSecurityConfig;
+import com.mediscreen.frontend.dto.NotePage;
+import com.mediscreen.frontend.dto.NoteView;
 import com.mediscreen.frontend.dto.PatientPage;
 import com.mediscreen.frontend.dto.PatientView;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -31,11 +35,19 @@ class PatientWebControllerTest {
     private static final PatientView TEST_NONE = new PatientView(
             1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), "FEMALE", "1 Brookside St", "100-222-3333");
 
+    private static final PatientView TEST_BORDERLINE =
+            new PatientView(2L, "Test", "TestBorderline", LocalDate.of(1945, 6, 24), "MALE", null, null);
+
+    private static final NotePage NO_NOTES = new NotePage(List.of(), 0, 20, 0, 0);
+
     @Autowired
     private MockMvcTester mvc;
 
     @MockitoBean
     private PatientClient client;
+
+    @MockitoBean
+    private NoteClient noteClient;
 
     @Nested
     @DisplayName("when nobody is signed in")
@@ -66,15 +78,15 @@ class PatientWebControllerTest {
         @Test
         @DisplayName("shows one patient, marking an absent address rather than hiding it")
         void showsOnePatient() {
-            given(client.get(2L))
-                    .willReturn(new PatientView(
-                            2L, "Test", "TestBorderline", LocalDate.of(1945, 6, 24), "MALE", null, null));
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
 
             assertThat(mvc.perform(get("/patients/2").with(user("tester"))))
                     .hasStatusOk()
                     .bodyText()
                     .contains("TestBorderline")
-                    .contains("Not recorded");
+                    .contains("Not recorded")
+                    .contains("No notes yet.");
         }
 
         @Test
@@ -107,6 +119,35 @@ class PatientWebControllerTest {
                     .hasStatusOk()
                     .bodyText()
                     .contains("Add a patient");
+        }
+    }
+
+    @Nested
+    @DisplayName("the notes on the patient page")
+    class Notes {
+
+        @Test
+        @DisplayName("shows each note with its line breaks, escaped rather than rendered as HTML")
+        void showsTheNotesAsTyped() {
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(noteClient.list(2L, 0, 20))
+                    .willReturn(new NotePage(
+                            List.of(new NoteView(
+                                    "n1",
+                                    2L,
+                                    "TestBorderline",
+                                    "Première ligne\nDeuxième <b>ligne</b>",
+                                    Instant.parse("2026-09-01T09:00:00Z"))),
+                            0,
+                            20,
+                            1,
+                            1));
+
+            assertThat(mvc.perform(get("/patients/2").with(user("tester"))))
+                    .hasStatusOk()
+                    .bodyText()
+                    .contains("Première ligne\nDeuxième &lt;b&gt;ligne&lt;/b&gt;")
+                    .doesNotContain("<b>ligne</b>");
         }
     }
 }
