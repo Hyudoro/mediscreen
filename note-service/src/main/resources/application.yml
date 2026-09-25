@@ -23,6 +23,10 @@ mediscreen:
     username: mediscreen-service
     password-hash: ${service-password-hash}
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
 logging:
   structured:
     format:
