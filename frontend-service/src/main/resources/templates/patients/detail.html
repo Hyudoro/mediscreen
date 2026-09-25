@@ -34,6 +34,32 @@
         <dd th:text="${patient.phoneNumber} ?: 'Not recorded'">Phone</dd>
     </dl>
 
+    <section>
+        <h2>Notes</h2>
+
+        <form class="note-form" th:object="${noteForm}" method="post"
+              th:action="@{/patients/{id}/notes(id=${patient.id})}">
+            <label for="note">New note</label>
+            <textarea id="note" th:field="*{note}" rows="6" required></textarea>
+            <p class="error" th:if="${#fields.hasErrors('note')}" th:errors="*{note}">error</p>
+            <div class="actions">
+                <button type="submit">Add the note</button>
+            </div>
+        </form>
+
+        <p th:if="${notes.content.isEmpty()}">No notes yet.</p>
+        <article class="note" th:each="entry : ${notes.content}">
+            <p class="note-date" th:text="${#temporals.format(entry.createdAt, 'yyyy-MM-dd HH:mm')}">Date</p>
+            <p class="note-text" th:text="${entry.note}">Note</p>
+        </article>
+
+        <nav class="pager" th:if="${notes.totalPages > 1}">
+            <a th:if="${notes.hasPrevious()}" th:href="@{/patients/{id}(id=${patient.id},page=${notes.number - 1})}">Newer</a>
+            <span th:text="'Page ' + (${notes.number} + 1) + ' of ' + ${notes.totalPages}">Page</span>
+            <a th:if="${notes.hasNext()}" th:href="@{/patients/{id}(id=${patient.id},page=${notes.number + 1})}">Older</a>
+        </nav>
+    </section>
+
     <p><a th:href="@{/patients}">Back to the list</a></p>
 </main>
 </body>

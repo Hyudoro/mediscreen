@@ -50,6 +50,11 @@ h1 {
     margin: 0 0 1rem;
 }
 
+h2 {
+    font-size: 1.15rem;
+    margin: 2rem 0 0.75rem;
+}
+
 .row {
     display: flex;
     align-items: center;
@@ -124,7 +129,7 @@ label {
     font-style: italic;
 }
 
-input, select {
+input, select, textarea {
     padding: 0.5rem;
     border: 1px solid var(--line);
     border-radius: 2px;
@@ -152,6 +157,10 @@ button, .button {
     color: var(--accent);
 }
 
+textarea {
+    resize: vertical;
+}
+
 .actions {
     display: flex;
     align-items: center;
@@ -162,6 +171,32 @@ button, .button {
     color: var(--error);
     margin: 0.3rem 0 0;
     font-size: 0.9rem;
+}
+
+.note-form {
+    max-width: 40rem;
+    margin-bottom: 1.5rem;
+}
+
+.note {
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 0.75rem 1rem;
+    margin: 0 0 0.75rem;
+}
+
+.note-date {
+    margin: 0 0 0.3rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+/* A note is shown as it was typed: line breaks and runs of spaces are kept, and
+   Thymeleaf still escapes the text rather than rendering it as HTML. */
+.note-text {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .pager {

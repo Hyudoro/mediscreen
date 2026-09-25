@@ -97,6 +97,17 @@ class PatientControllerTest {
         }
 
         @Test
+        @DisplayName("answers 400 as a ProblemDetail when the id is not a number")
+        void answers400ForAnIdThatIsNotANumber() {
+            assertThat(mvc.perform(get("/api/v1/patients/abc").with(user("tester"))))
+                    .hasStatus(HttpStatus.BAD_REQUEST)
+                    .hasContentType(MediaType.APPLICATION_PROBLEM_JSON)
+                    .bodyJson()
+                    .extractingPath("$.title")
+                    .isEqualTo("Bad Request");
+        }
+
+        @Test
         @DisplayName("accepts a patient with no address and no phone number")
         void acceptsOptionalFieldsMissing() {
             given(service.create(any()))
