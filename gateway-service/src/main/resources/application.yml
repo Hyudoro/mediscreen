@@ -13,6 +13,10 @@ spring:
               uri: ${mediscreen.services.patient-uri}
               predicates:
                 - Path=/api/v1/patients/**
+            - id: note-service
+              uri: ${mediscreen.services.note-uri}
+              predicates:
+                - Path=/api/v1/notes/**
 
 server:
   port: 9000
@@ -20,6 +24,7 @@ server:
 mediscreen:
   services:
     patient-uri: http://localhost:8081
+    note-uri: http://localhost:8082
 
 logging:
   structured:
@@ -34,3 +39,4 @@ spring:
 mediscreen:
   services:
     patient-uri: http://patient-service:8081
+    note-uri: http://note-service:8082
