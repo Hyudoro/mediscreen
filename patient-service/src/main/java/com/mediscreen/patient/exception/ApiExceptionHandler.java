@@ -4,16 +4,24 @@ import java.net.URI;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-/** Turns application exceptions into RFC 9457 problem details. */
+/**
+ * Turns exceptions into RFC 9457 problem details. The base class covers the errors Spring MVC raises
+ * itself, such as a body that is not JSON or an id that is not a number.
+ */
 @RestControllerAdvice
-public class ApiExceptionHandler {
+public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(PatientNotFoundException.class)
     public ProblemDetail handleNotFound(PatientNotFoundException exception) {
@@ -24,13 +32,14 @@ public class ApiExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         var problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "One or more fields are invalid");
         problem.setTitle("Invalid patient details");
         problem.setType(URI.create("https://mediscreen.com/problems/validation-failed"));
         problem.setProperty("errors", fieldErrors(exception));
-        return problem;
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
     private Map<String, String> fieldErrors(MethodArgumentNotValidException exception) {
