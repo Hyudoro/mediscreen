@@ -1,3 +1,46 @@
 spring:
   application:
     name: note-service
+  threads:
+    virtual:
+      enabled: true
+  mongodb:
+    host: localhost
+    port: 27017
+    database: mediscreen
+    username: mediscreen
+    authentication-database: admin
+  data:
+    mongodb:
+      # The service owns its index on patientId, as patient-service owns its schema through Flyway.
+      auto-index-creation: true
+
+server:
+  port: 8082
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+---
+# Local development: the databases run in Docker, the service runs on the host.
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
+  mongodb:
+    password: ${mongo-password}
+
+---
+# In the compose stack: secrets are mounted as files and read as a config tree, so
+# no password ever enters the process environment.
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configtree:/run/secrets/"
+  mongodb:
+    host: mongo
+    password: ${mongo-password}
