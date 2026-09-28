@@ -182,15 +182,15 @@ limit or expiry, and objects serialised into logs on every request.
 
 Suggested actions, most useful first:
 
+- Check the service account's password at BCrypt's lowest cost, 4, in both its
+  hash and the services' password encoder. It is a long random value, not one
+  a person chose, so a slow hash protects nothing there, and each patient page
+  makes five of these checks between the services.
 - Keep every collection endpoint paginated, and each page asking only for the
   rows it shows.
 - Select only the columns a response needs, with projections.
 - Keep the eleven risk terms' patterns compiled once, and the rules checked
   only until the first match.
-- Check the service account's password with a fast hash such as SHA-256
-  rather than BCrypt. It is a long random value, not one a person chose, and
-  each patient page costs five BCrypt checks between the services, about 60 ms
-  of CPU each.
 - Keep an index on every lookup path, as patientId has on notes and patient_id
   on address, and add one for any new lookup.
 - Build the images in stages, on a JRE base rather than a JDK, with a layered
