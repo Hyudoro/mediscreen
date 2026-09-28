@@ -88,7 +88,8 @@ directly, so the routing stays in one place.
 
 gateway-service keeps the X-Correlation-Id a request comes with, or generates
 one when there is none, passes it to the service behind the route and returns it
-in the response. The services do not write it in their logs yet.
+in the response, so a caller can quote it when reporting a problem. The services
+behind the gateway do not write it in their logs.
 
 Every service logs with Spring Boot's structured logging
 (logging.structured.format.console set to ecs): one ECS JSON document per line
