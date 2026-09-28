@@ -66,6 +66,19 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<!-- mutation testing on the risk rules, where it shows whether the tests catch a wrong threshold -->
+				<groupId>org.pitest</groupId>
+				<artifactId>pitest-maven</artifactId>
+				<configuration>
+					<targetClasses>
+						<param>com.mediscreen.assessment.domain.*</param>
+					</targetClasses>
+					<targetTests>
+						<param>com.mediscreen.assessment.domain.*</param>
+					</targetTests>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
