@@ -1,0 +1,7 @@
+# Tests never read the mounted secrets. These stand-in values only let the context
+# start.
+mediscreen:
+  gateway:
+    uri: http://localhost:9999
+    username: test-service
+    password: test-password
