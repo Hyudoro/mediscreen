@@ -55,7 +55,7 @@ docker run --rm httpd:2.4-alpine \
   htpasswd -nbBC 10 mediscreen-service "$(cat secrets/service-password)" \
   | head -n 1 | cut -d: -f2 > secrets/service-password-hash
 docker run --rm httpd:2.4-alpine \
-  htpasswd -nbBC 10 practitioner "$(cat secrets/ui-password)" \
+  htpasswd -nbBC 12 practitioner "$(cat secrets/ui-password)" \
   | head -n 1 | cut -d: -f2 > secrets/ui-password-hash
 ```
 
