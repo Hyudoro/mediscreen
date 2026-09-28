@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+<header th:fragment="header">
+    <a class="brand" th:href="@{/patients}">Mediscreen</a>
+    <form th:action="@{/logout}" method="post" class="logout">
+        <button type="submit">Sign out</button>
+    </form>
+</header>
+</body>
+</html>
