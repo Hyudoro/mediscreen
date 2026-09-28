@@ -1,5 +1,5 @@
 # Tests never read the mounted secrets. These stand-in values only let the context
-# start; the slice tests use a mock user.
+# start; the slice tests use a mock user and AssessmentApiIT sets a real hash.
 mediscreen:
   security:
     username: test-service
