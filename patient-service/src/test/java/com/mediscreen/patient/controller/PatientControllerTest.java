@@ -98,6 +98,19 @@ class PatientControllerTest {
         }
 
         @Test
+        @DisplayName("answers a page as its items and four paging numbers, nothing else")
+        void answersAPageAsItsItemsAndNumbers() {
+            given(service.findAll(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of(TEST_NONE), PageRequest.of(0, 20), 1));
+
+            assertThat(mvc.perform(get("/api/v1/patients").with(user("tester"))))
+                    .bodyJson()
+                    .extractingPath("$")
+                    .asMap()
+                    .containsOnlyKeys("content", "number", "size", "totalElements", "totalPages");
+        }
+
+        @Test
         @DisplayName("returns one patient as JSON")
         void returnsOnePatient() {
             given(service.findById(1L)).willReturn(TEST_NONE);
