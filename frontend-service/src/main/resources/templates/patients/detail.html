@@ -27,6 +27,8 @@
         <dd th:text="${patient.street} ?: 'Not recorded'">Street</dd>
         <dt>Phone number</dt>
         <dd th:text="${patient.phoneNumber} ?: 'Not recorded'">Phone</dd>
+        <dt>Diabetes risk</dt>
+        <dd th:text="${riskLevel}">None</dd>
     </dl>
 
     <section>

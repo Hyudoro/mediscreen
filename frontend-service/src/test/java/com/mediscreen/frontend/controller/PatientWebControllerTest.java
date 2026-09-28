@@ -10,9 +10,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
+import com.mediscreen.frontend.client.AssessmentClient;
 import com.mediscreen.frontend.client.NoteClient;
 import com.mediscreen.frontend.client.PatientClient;
 import com.mediscreen.frontend.config.WebSecurityConfig;
+import com.mediscreen.frontend.dto.AssessmentView;
 import com.mediscreen.frontend.dto.NotePage;
 import com.mediscreen.frontend.dto.NoteRequest;
 import com.mediscreen.frontend.dto.NoteView;
@@ -32,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 @WebMvcTest(PatientWebController.class)
 @Import(WebSecurityConfig.class)
@@ -54,6 +57,9 @@ class PatientWebControllerTest {
 
     @MockitoBean
     private NoteClient noteClient;
+
+    @MockitoBean
+    private AssessmentClient assessmentClient;
 
     @Nested
     @DisplayName("when nobody is signed in")
@@ -88,6 +94,7 @@ class PatientWebControllerTest {
         void showsOnePatient() {
             given(client.get(2L)).willReturn(TEST_BORDERLINE);
             given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
+            given(assessmentClient.get(2L)).willReturn(new AssessmentView(2L, "Borderline"));
 
             assertThat(mvc.perform(get("/patients/2").with(user("tester"))))
                     .hasStatusOk()
@@ -153,6 +160,7 @@ class PatientWebControllerTest {
         @DisplayName("shows each note with its line breaks, escaped rather than rendered as HTML")
         void showsTheNotesAsTyped() {
             given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(assessmentClient.get(2L)).willReturn(new AssessmentView(2L, "Borderline"));
             given(noteClient.list(2L, 0, 20))
                     .willReturn(new NotePage(
                             List.of(new NoteView(
@@ -194,6 +202,7 @@ class PatientWebControllerTest {
         void refusesABlankNote() {
             given(client.get(2L)).willReturn(TEST_BORDERLINE);
             given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
+            given(assessmentClient.get(2L)).willReturn(new AssessmentView(2L, "Borderline"));
 
             assertThat(mvc.perform(post("/patients/2/notes")
                             .param("note", "   ")
@@ -205,6 +214,40 @@ class PatientWebControllerTest {
                     .contains("must not be blank");
 
             then(noteClient).should(never()).add(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("the diabetes risk on the patient page")
+    class Risk {
+
+        @Test
+        @DisplayName("shows the level in words")
+        void showsTheLevelInWords() {
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
+            given(assessmentClient.get(2L)).willReturn(new AssessmentView(2L, "EarlyOnset"));
+
+            assertThat(mvc.perform(get("/patients/2").with(user("tester"))))
+                    .hasStatusOk()
+                    .bodyText()
+                    .contains("Diabetes risk")
+                    .contains("Early onset")
+                    .doesNotContain("EarlyOnset");
+        }
+
+        @Test
+        @DisplayName("still shows the patient when the level cannot be had")
+        void showsThePatientWithoutTheLevel() {
+            given(client.get(2L)).willReturn(TEST_BORDERLINE);
+            given(noteClient.list(2L, 0, 20)).willReturn(NO_NOTES);
+            given(assessmentClient.get(2L)).willThrow(new ResourceAccessException("Connection refused"));
+
+            assertThat(mvc.perform(get("/patients/2").with(user("tester"))))
+                    .hasStatusOk()
+                    .bodyText()
+                    .contains("TestBorderline")
+                    .contains("Not available");
         }
     }
 }
