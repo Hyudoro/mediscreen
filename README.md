@@ -1,8 +1,8 @@
 # Mediscreen
 
 Mediscreen helps doctors spot patients at risk of type 2 diabetes. It stores
-patient records and consultation notes, and will estimate each patient's risk
-from their notes.
+patient records and consultation notes, and estimates each patient's risk from
+their notes, age and sex.
 
 ## Services
 
@@ -10,8 +10,8 @@ Five Spring Boot services:
 
 - patient-service: patient records, in PostgreSQL.
 - note-service: consultation notes, in MongoDB.
-- assessment-service: the risk level, computed from the other two. Not built
-  yet.
+- assessment-service: the risk level, computed from the other two. It has no
+  database.
 - gateway-service: the single entry point for the API, on port 9000.
 - frontend-service: the web interface, on port 8080. It only talks to the
   gateway.
@@ -37,8 +37,9 @@ openssl rand -base64 24 > secrets/service-password
 openssl rand -base64 24 > secrets/ui-password
 ```
 
-The web interface calls the services with service-password, and you sign in to
-it with ui-password. Each one is checked against a BCrypt hash in its own file:
+The web interface and assessment-service call the other services with
+service-password, and you sign in to the web interface with ui-password. Each
+one is checked against a BCrypt hash in its own file:
 
 ```sh
 docker run --rm httpd:2.4-alpine \
@@ -65,6 +66,7 @@ Start each service in its own terminal, from the repository root:
 ```sh
 java -jar patient-service/target/patient-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 java -jar note-service/target/note-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+java -jar assessment-service/target/assessment-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 java -jar gateway-service/target/gateway-service-0.0.1-SNAPSHOT.jar
 java -jar frontend-service/target/frontend-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 ```
@@ -75,8 +77,9 @@ loads their nine notes on its first start.
 - Web interface: http://localhost:8080, user practitioner, password in
   secrets/ui-password.
 - API: http://localhost:9000.
-- API documentation: http://localhost:8081/swagger-ui.html for patients and
-  http://localhost:8082/swagger-ui.html for notes.
+- API documentation: http://localhost:8081/swagger-ui.html for patients,
+  http://localhost:8082/swagger-ui.html for notes and
+  http://localhost:8083/swagger-ui.html for assessments.
 
 To build one service only:
 
@@ -89,14 +92,15 @@ To build one service only:
 All requests go through the gateway, under /api/v1, with HTTP Basic
 credentials: user mediscreen-service, password in secrets/service-password.
 
-| Request                          | Action                                 |
-|----------------------------------|----------------------------------------|
-| GET /api/v1/patients             | list patients, one page at a time      |
-| GET /api/v1/patients/{id}        | get one patient                        |
-| POST /api/v1/patients            | add a patient                          |
-| PUT /api/v1/patients/{id}        | update a patient                       |
-| GET /api/v1/notes?patientId={id} | list a patient's notes, newest first   |
-| POST /api/v1/notes               | add a note                             |
+| Request                             | Action                               |
+|-------------------------------------|--------------------------------------|
+| GET /api/v1/patients                | list patients, one page at a time    |
+| GET /api/v1/patients/{id}           | get one patient                      |
+| POST /api/v1/patients               | add a patient                        |
+| PUT /api/v1/patients/{id}           | update a patient                     |
+| GET /api/v1/notes?patientId={id}    | list a patient's notes, newest first |
+| POST /api/v1/notes                  | add a note                           |
+| GET /api/v1/assessments/{patientId} | get a patient's diabetes risk level  |
 
 Lists take page and size parameters and return content, number, size,
 totalElements and totalPages. A note is posted with the patient's last name:
@@ -105,8 +109,14 @@ totalElements and totalPages. A note is posted with the patient's last name:
 { "patientId": 1, "patient": "TestNone", "note": "..." }
 ```
 
+An assessment returns the patient id and one of the four risk levels:
+
+```json
+{ "patientId": 1, "riskLevel": "None" }
+```
+
 Errors are ProblemDetail (RFC 9457). A request without credentials gets a bare
-401.
+401. An assessment that cannot read the patient's record or notes gets a 502.
 
 ## Data
 
@@ -121,29 +131,36 @@ The notes and the risk terms are in French, as the client supplied them.
 
 ## Risk levels
 
-Not built yet. assessment-service will count how many of these eleven terms
-appear in a patient's notes, each term once however often it appears:
-Hémoglobine A1C, Microalbumine, Taille, Poids, Fumeur or Fumeuse, Anormal,
-Cholestérol, Vertiges, Rechute, Réaction, Anticorps. The count, the patient's
-age and sex give the level:
+assessment-service counts how many of these eleven terms appear in a patient's
+notes, each term once however often it appears: Hémoglobine A1C, Microalbumine,
+Taille, Poids, Fumeur or Fumeuse, Anormal, Cholestérol, Vertiges, Rechute,
+Réaction, Anticorps. The count, the patient's age and sex give the level.
+Levels are checked from the most serious down, and the first match wins:
 
 | Level      | Condition                                                      |
 |------------|----------------------------------------------------------------|
-| None       | fewer than 2 terms                                             |
-| Borderline | 2 to 5 terms and over 30                                       |
-| InDanger   | under 30: at least 3 for men, 4 for women. Over 30: at least 6 |
-| EarlyOnset | under 30: at least 5 for men, 7 for women. Over 30: at least 8 |
+| EarlyOnset | under 30: at least 5 for men, 7 for women. From 30: at least 8 |
+| InDanger   | under 30: at least 3 for men, 4 for women. From 30: at least 6 |
+| Borderline | from 30: at least 2                                            |
+| None       | any other case                                                 |
 
-Levels are checked from the most serious down, and the first match wins.
-Matching ignores case and accents and works on word stems: "Vertige" counts as
-"Vertiges", but "fume" does not count as "Fumeur".
+A patient is under 30 until their 30th birthday. Matching ignores case and
+accents, and accepts each term in the singular, the plural and the feminine:
+"Vertige" counts as Vertiges and "anormale" as Anormal, but "fume" does not
+count as Fumeur.
 
 ## Tests
 
 Unit and slice tests, and integration tests against real PostgreSQL and MongoDB
-through Testcontainers. The build fails below 80% line coverage on the service
-layer (JaCoCo), on a layering violation (ArchUnit) and on bad formatting
-(Spotless).
+through Testcontainers. The client's four test patients get the risk levels the
+client expects. The build fails below 80% line coverage on the service layer
+(JaCoCo), on a layering violation (ArchUnit) and on bad formatting (Spotless).
+
+Mutation testing (PIT) checks the risk rules. It runs on demand:
+
+```sh
+./mvnw -pl assessment-service test-compile org.pitest:pitest-maven:mutationCoverage
+```
 
 ## Green Code
 
@@ -168,8 +185,12 @@ Suggested actions, most useful first:
 - Keep every collection endpoint paginated, and each page asking only for the
   rows it shows.
 - Select only the columns a response needs, with projections.
-- Compile the eleven risk terms' patterns once, and stop checking the rules at
-  the first match.
+- Keep the eleven risk terms' patterns compiled once, and the rules checked
+  only until the first match.
+- Check the service account's password with a fast hash such as SHA-256
+  rather than BCrypt. It is a long random value, not one a person chose, and
+  each patient page costs five BCrypt checks between the services, about 60 ms
+  of CPU each.
 - Keep an index on every lookup path, as patientId has on notes and patient_id
   on address, and add one for any new lookup.
 - Build the images in stages, on a JRE base rather than a JDK, with a layered
@@ -191,8 +212,8 @@ Suggested actions, most useful first:
 
 ## Status
 
-Sprints 1 and 2 are done: patient records and notes, through the gateway and the
-web interface. Still to come: assessment-service, one Docker image per service
+Sprints 1 to 3 are done: patient records, notes and the diabetes risk, through
+the gateway and the web interface. Still to come: one Docker image per service
 with the whole stack in Compose, and a GitHub Actions pipeline.
 
 ## More detail
