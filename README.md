@@ -47,15 +47,16 @@ openssl rand -base64 24 > secrets/ui-password
 service-password is the one the web interface uses to call the services, and
 ui-password is the one you sign in to the web interface with. Each is checked
 against a BCrypt hash kept in a file of its own. htpasswd prints a name and a
-hash separated by a colon, and cut keeps the hash:
+hash separated by a colon, then an empty line. head keeps the first line and
+cut keeps the hash:
 
 ```sh
 docker run --rm httpd:2.4-alpine \
   htpasswd -nbBC 10 mediscreen-service "$(cat secrets/service-password)" \
-  | cut -d: -f2 > secrets/service-password-hash
+  | head -n 1 | cut -d: -f2 > secrets/service-password-hash
 docker run --rm httpd:2.4-alpine \
   htpasswd -nbBC 10 practitioner "$(cat secrets/ui-password)" \
-  | cut -d: -f2 > secrets/ui-password-hash
+  | head -n 1 | cut -d: -f2 > secrets/ui-password-hash
 ```
 
 A service does not start if a file it reads is missing.
