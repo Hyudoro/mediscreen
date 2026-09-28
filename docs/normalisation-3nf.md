@@ -1,10 +1,9 @@
 # Normalisation to 3NF
 
-Abernathy Clinic needs the patient database normalised to third normal form as
-part of an ISO certification. Here is the proof.
-
-It covers the relational database owned by patient-service. The Mongo collection
-owned by note-service is in section 6.
+Abernathy Clinic needs its databases normalised to third normal form as part of
+an ISO certification. Here is the proof for both: the relational database owned
+by patient-service in sections 1 to 5, and the note collection owned by
+note-service in section 6.
 
 ## 1. Attributes
 
@@ -77,9 +76,9 @@ house number and a street name separately, so splitting it would invent a
 granularity nobody uses.
 
 2NF, no partial dependency on a key. 2NF is only violated when a non-key
-attribute depends on part of a composite key. Every primary key here is a single
-surrogate column, so no partial dependency is possible and both tables are in
-2NF.
+attribute depends on part of a composite candidate key. Every candidate key here
+is a single column, {id} in patient and {id} or {patient_id} in address, so no
+partial dependency is possible and both tables are in 2NF.
 
 3NF, no transitive dependency. A non-key attribute must not be determined by
 another non-key attribute.
@@ -120,14 +119,22 @@ note-service stores documents in MongoDB:
 { _id, patientId, patient, note, createdAt }
 ```
 
-Normal forms are a property of the relational model and do not carry over to a
-document store, so 3NF does not apply here. The patient field, which holds the
-patient's last name copied into the note, is a deliberate denormalisation:
+Normal forms are defined on relations, not on documents. Every note has the same
+five fields, each holding a single value, so the collection reads as a relation
+and can be checked the same way:
 
-- The clinic's own note format includes it, and it is the name the doctor saw
-  when writing the note.
-- It is a label recorded at a point in time, not a source of truth. patientId is
-  the reference, and the name in patient-service is authoritative.
+```
+_id -> patientId, patient, note, createdAt
+```
 
-The ISO requirement concerns the relational database, which is the one described
-in sections 2 to 5.
+One candidate key, {_id}. patientId is not a determinant, and in particular it
+does not determine patient. The patient field holds the last name as it was when
+the note was written: the clinic's own note format includes it, and it is the
+name the doctor saw. It records that moment rather than copying patient-service,
+so two notes about the same patient carry different names if the name changed
+between them. patientId is the link to the patient, and the name in
+patient-service stays authoritative.
+
+With {_id} as the only determinant, the collection is in 1NF (single values, no
+repeating groups), 2NF (a single-column key) and 3NF (no non-key attribute
+determines another), and in BCNF as well.

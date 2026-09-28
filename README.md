@@ -122,14 +122,15 @@ as ProblemDetail (RFC 9457), and a request without credentials gets a plain 401.
 
 ## Data
 
-Patients are in PostgreSQL, in two tables: patient and address. The schema is
-normalised to third normal form, which the client needs for an ISO
-certification, and docs/normalisation-3nf.md sets out why it holds. Flyway owns
-the schema.
+Patients are in PostgreSQL, in two tables: patient and address. Flyway owns the
+schema.
 
 Notes are one Mongo collection, { _id, patientId, patient, note, createdAt },
 indexed on patientId. A note is stored as it was typed, line breaks included,
 and the application sets no limit on its length.
+
+Both are normalised to third normal form, which the client needs for an ISO
+certification, and docs/normalisation-3nf.md sets out why each holds.
 
 The notes and the terms the risk rules look for are in French. That is how the
 source data was supplied.
@@ -226,5 +227,5 @@ service with the whole stack in Compose, and a GitHub Actions pipeline.
 
 - docs/architecture.md: how the services fit together and call each other, how
   they are configured, and the layering rules.
-- docs/normalisation-3nf.md: the proof that the patient schema is in third
-  normal form.
+- docs/normalisation-3nf.md: the proof that the patient schema and the note
+  collection are in third normal form.
