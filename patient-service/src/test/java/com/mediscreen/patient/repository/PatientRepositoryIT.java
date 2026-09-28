@@ -80,6 +80,23 @@ class PatientRepositoryIT {
                     .get()
                     .satisfies(patient -> assertThat(patient.getGender()).isEqualTo(Gender.MALE));
         }
+
+        @Test
+        @DisplayName("updates the address row in place rather than adding a second one")
+        void updatesTheAddressInPlace() {
+            var patient = repository.saveAndFlush(
+                    new Patient("Test", "One", LocalDate.of(1990, 1, 1), Gender.MALE, "1 street", null));
+
+            patient.setStreet("2 street");
+            repository.saveAndFlush(patient);
+
+            assertThat(jdbcClient
+                            .sql("SELECT street FROM address WHERE patient_id = ?")
+                            .param(patient.getId())
+                            .query(String.class)
+                            .list())
+                    .containsExactly("2 street");
+        }
     }
 
     @Nested
@@ -122,17 +139,16 @@ class PatientRepositoryIT {
         }
 
         @Test
-        @DisplayName("keeps the address relation at most one per patient")
-        void keepsTheAddressUnique() {
+        @DisplayName("refuses a second address for the same patient")
+        void refusesASecondAddress() {
             var patient = repository.saveAndFlush(
-                    new Patient("Test", "One", LocalDate.of(1990, 1, 1), Gender.MALE, "1 Street", null));
+                    new Patient("Test", "One", LocalDate.of(1990, 1, 1), Gender.FEMALE, "1 street", null));
 
-            assertThat(patient.getStreet()).contains("1 Street");
-
-            patient.setStreet("2 Street");
-            var updated = repository.saveAndFlush(patient);
-
-            assertThat(updated.getStreet()).contains("2 Street");
+            assertThatThrownBy(() -> jdbcClient
+                            .sql("INSERT INTO address (patient_id, street) VALUES (?, '2 Street')")
+                            .param(patient.getId())
+                            .update())
+                    .hasMessageContaining("address_patient_id_key");
         }
     }
 
