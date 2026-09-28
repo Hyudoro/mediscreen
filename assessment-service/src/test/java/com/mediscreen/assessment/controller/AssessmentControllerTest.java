@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import com.mediscreen.assessment.config.SecurityConfig;
 import com.mediscreen.assessment.dto.AssessmentResponse;
 import com.mediscreen.assessment.exception.PatientNotFoundException;
 import com.mediscreen.assessment.service.AssessmentService;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,6 +25,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.web.client.ResourceAccessException;
 
 @WebMvcTest(AssessmentController.class)
+@Import(SecurityConfig.class)
 @DisplayName("The assessment endpoint")
 class AssessmentControllerTest {
 
@@ -31,6 +34,18 @@ class AssessmentControllerTest {
 
     @MockitoBean
     private AssessmentService service;
+
+    @Nested
+    @DisplayName("without credentials")
+    class Unauthenticated {
+
+        @Test
+        @DisplayName("answers 401 rather than assessing the patient")
+        void refusesToAssess() {
+            assertThat(mvc.get().uri("/api/v1/assessments/3")).hasStatus(HttpStatus.UNAUTHORIZED);
+            then(service).should(never()).assess(anyLong());
+        }
+    }
 
     @Nested
     @DisplayName("with credentials")

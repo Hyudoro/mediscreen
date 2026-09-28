@@ -9,6 +9,9 @@ server:
   port: 8083
 
 mediscreen:
+  security:
+    username: mediscreen-service
+    password-hash: ${service-password-hash}
   gateway:
     uri: http://localhost:9000
     username: mediscreen-service

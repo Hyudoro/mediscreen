@@ -1,6 +1,9 @@
 # Tests never read the mounted secrets. These stand-in values only let the context
-# start.
+# start; the slice tests use a mock user.
 mediscreen:
+  security:
+    username: test-service
+    password-hash: "{noop}test-password"
   gateway:
     uri: http://localhost:9999
     username: test-service
