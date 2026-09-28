@@ -10,15 +10,19 @@ import static com.mediscreen.assessment.domain.TriggerTerm.SMOKER;
 import static com.mediscreen.assessment.domain.TriggerTerm.VERTIGO;
 import static com.mediscreen.assessment.domain.TriggerTerm.WEIGHT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.argumentSet;
 
 import com.mediscreen.assessment.ClientTestData;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 @DisplayName("Finding the trigger terms")
@@ -83,10 +87,20 @@ class TriggerTermTest {
             assertThat(found(word)).containsExactly(CHOLESTEROL);
         }
 
-        @Test
-        @DisplayName("finds a two-word term split over two lines")
-        void findsATwoWordTermOverALineBreak() {
-            assertThat(found("Hémoglobine\nA1C supérieure au niveau recommandé"))
+        static Stream<Arguments> spaces() {
+            return Stream.of(
+                    argumentSet("a space", " "),
+                    argumentSet("a line break", "\n"),
+                    argumentSet("a tab", "\t"),
+                    argumentSet("a no-break space", "\u00A0"),
+                    argumentSet("a narrow no-break space", "\u202F"));
+        }
+
+        @ParameterizedTest(name = "{argumentSetName}")
+        @DisplayName("finds a two-word term whatever space its words are typed with")
+        @MethodSource("spaces")
+        void findsATwoWordTermWhateverTheSpace(String space) {
+            assertThat(found("Hémoglobine" + space + "A1C supérieure au niveau recommandé"))
                     .containsExactly(HEMOGLOBIN_A1C);
         }
 

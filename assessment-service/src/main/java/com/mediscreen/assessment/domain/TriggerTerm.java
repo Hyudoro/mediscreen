@@ -52,13 +52,17 @@ public enum TriggerTerm {
         return pattern.matcher(foldedNote).find();
     }
 
-    /** Lower case without accents, so that "Cholestérol", "cholesterol" and "CHOLESTÉROL" are the same. */
+    /**
+     * Lower case, without accents and with plain spaces, so that "Cholestérol", "cholesterol" and
+     * "CHOLESTÉROL" are the same. NFKD, unlike NFD, also turns a no-break space into a space: French
+     * typing puts one between words that must stay together, such as "Hémoglobine" and "A1C".
+     */
     private static final class Folding {
 
         private static final Pattern ACCENTS = Pattern.compile("\\p{M}+");
 
         static String fold(String text) {
-            var decomposed = Normalizer.normalize(text, Normalizer.Form.NFD);
+            var decomposed = Normalizer.normalize(text, Normalizer.Form.NFKD);
             return ACCENTS.matcher(decomposed).replaceAll("").toLowerCase(Locale.ROOT);
         }
     }
