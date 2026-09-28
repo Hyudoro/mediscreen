@@ -1,8 +1,7 @@
 # Architecture
 
-The README covers what each service does and how to run it. This file has the
-parts a reader needs when changing something: the deployment layout, how the
-services call each other, the configuration, and the rules the build enforces.
+How the services fit together, how they are configured, and the rules the build
+enforces. The README covers what each service does and how to run it.
 
 ```
 browser ──▶ frontend-service :8080   (web interface)
@@ -21,16 +20,16 @@ browser ──▶ frontend-service :8080   (web interface)
 
 assessment-service is not built yet.
 
-## 1. Deployment layout
+## 1. Deployment
 
-The services do not run in containers yet. They run on the host with the dev
-profile, and docker-compose.yml starts the two databases, with their ports
-published on 127.0.0.1 only.
+For now the services run on the host with the dev profile, and
+docker-compose.yml starts only the two databases, on 127.0.0.1.
 
-The planned layout is one image per service, one container per service and a
-single Compose network:
+The target layout is one image and one container per service, on one Compose
+network. Only the front and the gateway publish a host port, so the gateway is
+the only way in to patient data:
 
-| Container          | Image base                    | Host port | Container port |
+| Container          | Image                         | Host port | Container port |
 |--------------------|-------------------------------|-----------|----------------|
 | frontend-service   | eclipse-temurin:25-jre-alpine | 8080      | 8080           |
 | gateway-service    | eclipse-temurin:25-jre-alpine | 9000      | 9000           |
@@ -40,71 +39,49 @@ single Compose network:
 | postgres           | postgres:18-alpine            | none      | 5432           |
 | mongo              | mongo:8.3                     | none      | 27017          |
 
-In that layout only the front and the gateway publish a host port, so the
-gateway is the only way in to patient data. docker compose ps shows it: the
-PORTS column is empty for every other container.
+## 2. Services
 
-## 2. Notes on individual services
+patient-service: Flyway creates the schema and Hibernate only validates it, so
+an entity that does not match the schema stops the startup. The four test
+patients are loaded only under the dev and docker profiles.
 
-Only the parts that are not obvious from the README.
+note-service: the mongo container loads the test notes from
+note-service/mongo-init when its data directory is empty. The service creates
+the patientId index itself and does not write Spring Data's _class field, so
+every note has the same five fields. Notes are never trimmed or truncated.
 
-patient-service: Flyway owns the DDL and Hibernate runs with ddl-auto set to
-validate, so a mismatch between an entity and the schema fails at startup. The
-test patients are in a second Flyway location, used only under the dev and
-docker profiles.
+assessment-service will hold rules and no data: it reads patients and notes
+from the other two services.
 
-note-service: the test notes are loaded by a script mounted into
-docker-entrypoint-initdb.d, which the mongo container runs only when its data
-directory is empty. The service creates the index on patientId itself at
-startup, and writes notes without Spring Data's _class field, so every note has
-the same fields as a seeded one. Notes keep their line breaks and have no length
-limit, so nothing trims, normalises or truncates them on the way in or out.
+gateway-service: routes live under spring.cloud.gateway.server.webflux.routes.
+The older spring.cloud.gateway.routes is silently ignored. The gateway checks
+no credentials: it forwards the Authorization header to the service behind it.
 
-assessment-service will hold rules and no data. Its answers will be derived from
-the other two services, so it will have nothing to persist.
+## 3. Calls between services
 
-gateway-service: routes are configured under
-spring.cloud.gateway.server.webflux.routes, the namespace Spring Cloud 2025.x
-reads. The older spring.cloud.gateway.routes form is ignored without an error.
-The gateway checks no credentials: it passes the Authorization header on, and
-the service behind it checks it.
+Synchronous HTTP, with RestClient behind @HttpExchange interfaces:
 
-## 3. How the services call each other
+1. The front calls the gateway to build each page, with its own service
+   account, never with the user's credentials.
+2. assessment-service will call the gateway, which forwards to patient-service
+   and note-service. Going through the gateway keeps the routing in one place.
 
-Plain synchronous HTTP, using RestClient behind @HttpExchange interfaces.
+## 4. Correlation id and logs
 
-There are two hops:
+The gateway keeps the X-Correlation-Id header a request comes with, or creates
+one, forwards it and returns it in the response, so a caller can quote it when
+reporting a problem. The services behind the gateway do not log it.
 
-1. frontend-service to gateway-service, server side, to build each page. The
-   front calls with its service account, never with the credentials a user
-   signed in with.
-2. assessment-service to gateway-service, which forwards to patient-service and
-   note-service. This hop comes with assessment-service.
-
-The second hop goes back through the gateway instead of calling the two services
-directly, so the routing stays in one place.
-
-## 4. Correlation ids and logs
-
-gateway-service keeps the X-Correlation-Id a request comes with, or generates
-one when there is none, passes it to the service behind the route and returns it
-in the response. The services do not write it in their logs yet.
-
-Every service logs with Spring Boot's structured logging
-(logging.structured.format.console set to ecs): one ECS JSON document per line
-on stdout.
+Every service logs one ECS JSON document per line on stdout, with Spring Boot's
+structured logging.
 
 ## 5. Configuration
 
-Secrets are files, read as a configuration tree: every file in the directory
-becomes a property named after the file. Under the dev profile the directory is
-secrets/, looked for in the working directory and in its parent, so a service
-starts from the repository root or from its own module. Under the docker
-profile, meant for the containers, it is /run/secrets, where Compose mounts
-secret files.
-
-application.yml refers to each secret by that name, with no default, so a
-service does not start without its secrets:
+Each secret is a file, read as a configuration tree: the file name becomes the
+property name. The dev profile reads secrets/ from the working directory or its
+parent. The docker profile reads /run/secrets, where Compose mounts them.
+application.yml uses each secret by name, with no default, so a missing secret
+stops the startup:
 
 ```yaml
 spring:
@@ -120,25 +97,21 @@ spring:
 | service-password      | frontend-service              |
 | ui-password-hash      | frontend-service              |
 
-The README says how to create them.
-
 ## 6. Layering
 
-patient-service and note-service use the same packages under
+patient-service and note-service share the same packages under
 com.mediscreen.<service>: controller, service, repository, domain, dto,
 exception and config. frontend-service has client, controller, dto and config.
 
-In those two services, ArchUnit fails the build when:
+In the two back services, ArchUnit fails the build when:
 
-- a layer calls upwards: controllers call services, services call repositories,
-  never the other way
+- a layer calls upwards: controllers call services, services call repositories
 - a controller uses a repository
 - a controller depends on an entity or a document
 - packages depend on each other in a cycle
 
-The other conventions are kept by review. Injection goes through constructors,
-and every incoming DTO carries @Valid. DTOs are records, and the ones built from
-an entity or a document have a static from(...) factory. The front's two form
-objects are classes, because Thymeleaf binds a form through setters. There is no
-Lombok and no MapStruct. The back services answer errors with a ProblemDetail
-(RFC 9457), apart from the 401 for a request without credentials.
+Also followed, though the build does not check them: constructor injection,
+@Valid on every incoming DTO, DTOs as records with a static from(...) factory,
+no Lombok or MapStruct, and errors as ProblemDetail (RFC 9457) except the 401
+without credentials. The front's two form objects are classes, because Thymeleaf
+binds forms through setters.

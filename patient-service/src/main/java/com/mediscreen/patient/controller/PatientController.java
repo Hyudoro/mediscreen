@@ -1,5 +1,6 @@
 package com.mediscreen.patient.controller;
 
+import com.mediscreen.patient.dto.PageResponse;
 import com.mediscreen.patient.dto.PatientRequest;
 import com.mediscreen.patient.dto.PatientResponse;
 import com.mediscreen.patient.service.PatientService;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -34,8 +34,8 @@ public class PatientController {
 
     @GetMapping
     @Operation(summary = "List patients, one page at a time")
-    public Page<PatientResponse> list(@PageableDefault(size = 20) Pageable pageable) {
-        return service.findAll(pageable);
+    public PageResponse<PatientResponse> list(@PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(service.findAll(pageable));
     }
 
     @GetMapping("/{id}")

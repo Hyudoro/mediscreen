@@ -1,14 +1,12 @@
 # Normalisation to 3NF
 
-Abernathy Clinic needs the patient database normalised to third normal form as
-part of an ISO certification. Here is the proof.
-
-It covers the relational database owned by patient-service. The Mongo collection
-owned by note-service is in section 6.
+Abernathy Clinic's ISO certification requires its databases in third normal
+form. This document proves it for the patient tables (sections 1 to 5) and for
+the note collection (section 6).
 
 ## 1. Attributes
 
-The patient record as the clinic supplied it:
+The patient record, as the clinic supplied it:
 
 | Attribute    | Example        |
 |--------------|----------------|
@@ -19,7 +17,7 @@ The patient record as the clinic supplied it:
 | Address      | 1 Brookside St |
 | Phone number | 100-222-3333   |
 
-The address and the phone number are optional. The other four are required.
+Address and phone number are optional. The other four are required.
 
 ## 2. Schema
 
@@ -51,8 +49,8 @@ patient:
 id -> first_name, last_name, birth_date, gender, phone_number
 ```
 
-One candidate key, {id}. Nothing else is a determinant: two patients can share a
-name, a birth date, a gender, and a phone number if they live in the same house.
+One candidate key, {id}. No other attribute determines anything: two patients
+can share a name, a birth date, a gender or a phone number.
 
 address:
 
@@ -61,73 +59,56 @@ id         -> patient_id, street
 patient_id -> id, street
 ```
 
-Two candidate keys, {id} and {patient_id}. The second is why patient_id carries
-a UNIQUE constraint, and that constraint is what makes the relation one to
-zero-or-one rather than one to many.
+Two candidate keys, {id} and {patient_id}. The UNIQUE constraint on patient_id
+makes it a key, and makes the relation one to zero-or-one.
 
-## 4. The normal forms
+## 4. Normal forms
 
-1NF, atomic values and no repeating groups. Every attribute holds a single
-value. There are no comma-separated lists, no phone_1 and phone_2 columns, and
-no array types.
+1NF: every attribute holds a single value. No lists, no phone_1 and phone_2
+columns, no arrays. street is one postal line, which the clinic never splits.
 
-street holds the street line as one value, for example "1 Brookside St". That is
-atomic for this domain: the clinic records and searches a postal line, never a
-house number and a street name separately, so splitting it would invent a
-granularity nobody uses.
+2NF: no non-key attribute depends on part of a candidate key. Every candidate
+key here is a single column, so this cannot happen.
 
-2NF, no partial dependency on a key. 2NF is only violated when a non-key
-attribute depends on part of a composite key. Every primary key here is a single
-surrogate column, so no partial dependency is possible and both tables are in
-2NF.
+3NF: no non-key attribute determines another. In patient, gender holds only the
+code, F or M, restricted by a check constraint. A label column next to it would
+break 3NF (gender -> gender_label), but there is none. In address, street
+depends only on the keys.
 
-3NF, no transitive dependency. A non-key attribute must not be determined by
-another non-key attribute.
+BCNF: every determinant in section 3 is a candidate key, so both tables are also
+in BCNF.
 
-In patient, gender holds the code alone, F or M, and a check constraint keeps it
-to those two values. No label is stored beside it, so no non-key attribute
-determines another. A label column next to the code would break this: gender ->
-gender_label is one non-key attribute determining another, which is 2NF but not
-3NF, and every row would repeat the label.
+## 5. Why the address has its own table
 
-In address, street is determined by id, and by patient_id because patient_id is
-a candidate key, so there is no transitive dependency.
+3NF does not require it: a nullable street column on patient would also be in
+3NF. It is separate for two practical reasons. A missing address is a missing
+row, not a NULL that could mean "not recorded", "refused" or "lost in an
+import". And a later postcode or city goes into this table instead of adding
+nullable columns to patient.
 
-BCNF. Every determinant listed in section 3 is a candidate key, so both tables
-also satisfy BCNF, which is stronger than what was asked for.
+The phone number stays on patient: it is a single value with no parts, and a
+separate table would only add a join.
 
-## 5. Why the address is a separate table
+## 6. The note collection
 
-Keeping street as a nullable column on patient would be legal: id -> street is a
-dependency on the key, and 3NF says nothing about nullability. It is split
-anyway, for two reasons that are practical rather than formal.
-
-Absence becomes a missing row instead of a NULL. A NULL could equally mean "not
-recorded yet", "the patient refused to give one" or "lost during an import",
-whereas a missing row states the fact plainly.
-
-If the clinic later records a postcode or a city, those land on a table that
-already exists instead of adding more nullable columns to patient.
-
-The phone number stays on patient as a nullable column. It is single-valued, it
-has no sub-structure, and separating it would add a join for nothing.
-
-## 6. The note store
-
-note-service stores documents in MongoDB:
+note-service stores one MongoDB document per note:
 
 ```
 { _id, patientId, patient, note, createdAt }
 ```
 
-Normal forms are a property of the relational model and do not carry over to a
-document store, so 3NF does not apply here. The patient field, which holds the
-patient's last name copied into the note, is a deliberate denormalisation:
+Normal forms are defined on relations. Every note has the same five
+single-valued fields, so the collection can be read as a relation and checked
+the same way:
 
-- The clinic's own note format includes it, and it is the name the doctor saw
-  when writing the note.
-- It is a label recorded at a point in time, not a source of truth. patientId is
-  the reference, and the name in patient-service is authoritative.
+```
+_id -> patientId, patient, note, createdAt
+```
 
-The ISO requirement concerns the relational database, which is the one described
-in sections 2 to 5.
+One candidate key, {_id}. patientId does not determine patient: patient is the
+last name at the time the note was written, as in the clinic's note format, not
+a copy kept in sync with patient-service. Two notes about the same patient carry
+different names if the name changed between them. patientId is the link, and
+patient-service holds the current name.
+
+With {_id} as the only determinant, the collection is in 1NF, 2NF, 3NF and BCNF.

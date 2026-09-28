@@ -2,13 +2,13 @@ package com.mediscreen.note.controller;
 
 import com.mediscreen.note.dto.NoteRequest;
 import com.mediscreen.note.dto.NoteResponse;
+import com.mediscreen.note.dto.PageResponse;
 import com.mediscreen.note.service.NoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -38,10 +38,10 @@ public class NoteController {
         @ApiResponse(responseCode = "200", description = "The patient's notes, possibly none"),
         @ApiResponse(responseCode = "400", description = "patientId is missing or invalid")
     })
-    public Page<NoteResponse> list(
+    public PageResponse<NoteResponse> list(
             @RequestParam long patientId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return service.findByPatientId(patientId, pageable);
+        return PageResponse.from(service.findByPatientId(patientId, pageable));
     }
 
     @PostMapping

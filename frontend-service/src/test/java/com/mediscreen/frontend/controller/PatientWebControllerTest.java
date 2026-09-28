@@ -27,9 +27,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.web.client.HttpClientErrorException;
 
 @WebMvcTest(PatientWebController.class)
 @Import(WebSecurityConfig.class)
@@ -69,14 +71,16 @@ class PatientWebControllerTest {
     class SignedIn {
 
         @Test
-        @DisplayName("lists the patients")
+        @DisplayName("lists the patients, with the gender in the words the form uses")
         void listsThePatients() {
             given(client.list(0, 20)).willReturn(new PatientPage(List.of(TEST_NONE), 0, 20, 1, 1));
 
             assertThat(mvc.perform(get("/patients").with(user("tester"))))
                     .hasStatusOk()
                     .bodyText()
-                    .contains("TestNone");
+                    .contains("TestNone")
+                    .contains("Female")
+                    .doesNotContain("FEMALE");
         }
 
         @Test
@@ -89,8 +93,23 @@ class PatientWebControllerTest {
                     .hasStatusOk()
                     .bodyText()
                     .contains("TestBorderline")
+                    .contains("Male")
+                    .doesNotContain("MALE")
                     .contains("Not recorded")
                     .contains("No notes yet.");
+        }
+
+        @Test
+        @DisplayName("answers a 404 with the not-found page when the patient does not exist")
+        void answers404ForAnUnknownPatient() {
+            given(client.get(99L))
+                    .willThrow(HttpClientErrorException.create(
+                            HttpStatus.NOT_FOUND, "Not Found", new HttpHeaders(), new byte[0], null));
+
+            assertThat(mvc.perform(get("/patients/99").with(user("tester"))))
+                    .hasStatus(HttpStatus.NOT_FOUND)
+                    .bodyText()
+                    .contains("There is no patient or page at this address.");
         }
 
         @Test

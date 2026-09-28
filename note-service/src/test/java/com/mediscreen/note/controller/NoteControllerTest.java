@@ -98,6 +98,19 @@ class NoteControllerTest {
         }
 
         @Test
+        @DisplayName("answers a page as its items and four paging numbers, nothing else")
+        void answersAPageAsItsItemsAndNumbers() {
+            given(service.findByPatientId(eq(1L), any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of(TEST_NONE_NOTE)));
+
+            assertThat(mvc.perform(get("/api/v1/notes").param("patientId", "1").with(user("tester"))))
+                    .bodyJson()
+                    .extractingPath("$")
+                    .asMap()
+                    .containsOnlyKeys("content", "number", "size", "totalElements", "totalPages");
+        }
+
+        @Test
         @DisplayName("answers 400 as a ProblemDetail when patientId is missing")
         void answers400WithoutPatientId() {
             assertThat(mvc.perform(get("/api/v1/notes").with(user("tester"))))

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mediscreen - Not found</title>
+    <link rel="stylesheet" th:href="@{/css/mediscreen.css}">
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main>
+    <h1>Not found</h1>
+    <p>There is no patient or page at this address.</p>
+    <p><a th:href="@{/patients}">Back to the list</a></p>
+</main>
+</body>
+</html>

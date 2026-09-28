@@ -3,24 +3,34 @@ package com.mediscreen.patient.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.never;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import com.mediscreen.patient.config.SecurityConfig;
 import com.mediscreen.patient.domain.Gender;
+import com.mediscreen.patient.dto.PatientRequest;
 import com.mediscreen.patient.dto.PatientResponse;
 import com.mediscreen.patient.exception.PatientNotFoundException;
 import com.mediscreen.patient.service.PatientService;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -33,6 +43,10 @@ class PatientControllerTest {
 
     private static final PatientResponse TEST_NONE = new PatientResponse(
             1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", "100-222-3333");
+
+    private static final String UPDATE = """
+            {"firstName":"Test","lastName":"TestNone","birthDate":"1966-12-31","gender":"FEMALE","street":"9 New Road"}
+            """;
 
     @Autowired
     private MockMvcTester mvc;
@@ -49,11 +63,52 @@ class PatientControllerTest {
         void answers401() {
             assertThat(mvc.get().uri("/api/v1/patients/1")).hasStatus(HttpStatus.UNAUTHORIZED);
         }
+
+        @Test
+        @DisplayName("answers 401 rather than updating a patient")
+        void refusesToUpdate() {
+            assertThat(mvc.put()
+                            .uri("/api/v1/patients/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(UPDATE))
+                    .hasStatus(HttpStatus.UNAUTHORIZED);
+            then(service).should(never()).update(anyLong(), any());
+        }
     }
 
     @Nested
     @DisplayName("with credentials")
     class Authenticated {
+
+        @Test
+        @DisplayName("lists the patients one page at a time, twenty by default")
+        void listsOnePageAtATime() {
+            given(service.findAll(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of(TEST_NONE), PageRequest.of(0, 20), 1));
+
+            assertThat(mvc.perform(get("/api/v1/patients").with(user("tester"))))
+                    .hasStatusOk()
+                    .bodyJson()
+                    .extractingPath("$.content[0].lastName")
+                    .isEqualTo("TestNone");
+
+            var pageable = ArgumentCaptor.forClass(Pageable.class);
+            then(service).should().findAll(pageable.capture());
+            assertThat(pageable.getValue().getPageSize()).isEqualTo(20);
+        }
+
+        @Test
+        @DisplayName("answers a page as its items and four paging numbers, nothing else")
+        void answersAPageAsItsItemsAndNumbers() {
+            given(service.findAll(any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of(TEST_NONE), PageRequest.of(0, 20), 1));
+
+            assertThat(mvc.perform(get("/api/v1/patients").with(user("tester"))))
+                    .bodyJson()
+                    .extractingPath("$")
+                    .asMap()
+                    .containsOnlyKeys("content", "number", "size", "totalElements", "totalPages");
+        }
 
         @Test
         @DisplayName("returns one patient as JSON")
@@ -123,6 +178,45 @@ class PatientControllerTest {
                             .content(body)
                             .with(user("tester"))))
                     .hasStatus(HttpStatus.CREATED);
+        }
+
+        @Test
+        @DisplayName("updates a patient and returns the new details")
+        void updatesAPatient() {
+            given(service.update(eq(1L), any()))
+                    .willReturn(new PatientResponse(
+                            1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "9 New Road", null));
+
+            assertThat(mvc.perform(put("/api/v1/patients/1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(UPDATE)
+                            .with(user("tester"))))
+                    .hasStatusOk()
+                    .bodyJson()
+                    .extractingPath("$.street")
+                    .isEqualTo("9 New Road");
+
+            then(service)
+                    .should()
+                    .update(
+                            1L,
+                            new PatientRequest(
+                                    "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "9 New Road", null));
+        }
+
+        @Test
+        @DisplayName("answers 404 as a ProblemDetail when updating an unknown patient")
+        void answers404WhenUpdatingAnUnknownPatient() {
+            willThrow(new PatientNotFoundException(99L)).given(service).update(eq(99L), any());
+
+            assertThat(mvc.perform(put("/api/v1/patients/99")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(UPDATE)
+                            .with(user("tester"))))
+                    .hasStatus(HttpStatus.NOT_FOUND)
+                    .bodyJson()
+                    .extractingPath("$.title")
+                    .isEqualTo("Patient not found");
         }
     }
 }

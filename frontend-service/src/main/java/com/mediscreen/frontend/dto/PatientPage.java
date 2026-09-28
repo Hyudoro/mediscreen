@@ -2,7 +2,7 @@ package com.mediscreen.frontend.dto;
 
 import java.util.List;
 
-/** One page of patients, mirroring the fields Spring Data serialises. */
+/** One page of patients, as patient-service answers it. */
 public record PatientPage(List<PatientView> content, int number, int size, int totalPages, long totalElements) {
 
     public boolean hasPrevious() {
