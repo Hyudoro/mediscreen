@@ -5,9 +5,13 @@ import static com.mediscreen.assessment.domain.TriggerTerm.ANTIBODIES;
 import static com.mediscreen.assessment.domain.TriggerTerm.CHOLESTEROL;
 import static com.mediscreen.assessment.domain.TriggerTerm.HEIGHT;
 import static com.mediscreen.assessment.domain.TriggerTerm.HEMOGLOBIN_A1C;
+import static com.mediscreen.assessment.domain.TriggerTerm.REACTION;
+import static com.mediscreen.assessment.domain.TriggerTerm.SMOKER;
+import static com.mediscreen.assessment.domain.TriggerTerm.VERTIGO;
 import static com.mediscreen.assessment.domain.TriggerTerm.WEIGHT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.mediscreen.assessment.ClientTestData;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -134,6 +138,41 @@ class TriggerTermTest {
         void findsNothing() {
             assertThat(found("Le patient déclare qu'il 'se sent très bien'")).isEmpty();
             assertThat(found()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("in the client's test notes")
+    class ClientNotes {
+
+        private Set<TriggerTerm> foundForPatient(long id) {
+            return TriggerTerm.foundIn(ClientTestData.patient(id).notes());
+        }
+
+        @Test
+        @DisplayName("finds Poids once for patient 1, though the note has it twice")
+        void patient1() {
+            assertThat(foundForPatient(1)).containsExactly(WEIGHT);
+        }
+
+        @Test
+        @DisplayName("finds Anormal and Réaction for patient 2")
+        void patient2() {
+            assertThat(foundForPatient(2)).containsExactlyInAnyOrder(ABNORMAL, REACTION);
+        }
+
+        @Test
+        @DisplayName("finds Fumeur, Anormal and Cholestérol for patient 3")
+        void patient3() {
+            assertThat(foundForPatient(3)).containsExactlyInAnyOrder(SMOKER, ABNORMAL, CHOLESTEROL);
+        }
+
+        @Test
+        @DisplayName("finds seven terms for patient 4, Vertige among them and not Fumeur")
+        void patient4() {
+            assertThat(foundForPatient(4))
+                    .containsExactlyInAnyOrder(
+                            ANTIBODIES, REACTION, HEMOGLOBIN_A1C, HEIGHT, WEIGHT, CHOLESTEROL, VERTIGO);
         }
     }
 }
