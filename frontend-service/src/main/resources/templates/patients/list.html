@@ -33,7 +33,7 @@
             <td><a th:href="@{/patients/{id}(id=${patient.id})}" th:text="${patient.lastName}">Name</a></td>
             <td th:text="${patient.firstName}">First</td>
             <td th:text="${patient.birthDate}">Date</td>
-            <td th:text="${patient.gender}">F</td>
+            <td th:text="${patient.genderLabel()}">Female</td>
         </tr>
         <tr th:if="${patients.content.isEmpty()}">
             <td colspan="4">No patients yet.</td>

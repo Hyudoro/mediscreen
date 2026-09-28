@@ -27,7 +27,7 @@
         <dt>Birth date</dt>
         <dd th:text="${patient.birthDate}">Date</dd>
         <dt>Gender</dt>
-        <dd th:text="${patient.gender}">F</dd>
+        <dd th:text="${patient.genderLabel()}">Female</dd>
         <dt>Postal address</dt>
         <dd th:text="${patient.street} ?: 'Not recorded'">Street</dd>
         <dt>Phone number</dt>

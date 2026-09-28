@@ -71,14 +71,16 @@ class PatientWebControllerTest {
     class SignedIn {
 
         @Test
-        @DisplayName("lists the patients")
+        @DisplayName("lists the patients, with the gender in the words the form uses")
         void listsThePatients() {
             given(client.list(0, 20)).willReturn(new PatientPage(List.of(TEST_NONE), 0, 20, 1, 1));
 
             assertThat(mvc.perform(get("/patients").with(user("tester"))))
                     .hasStatusOk()
                     .bodyText()
-                    .contains("TestNone");
+                    .contains("TestNone")
+                    .contains("Female")
+                    .doesNotContain("FEMALE");
         }
 
         @Test
@@ -91,6 +93,8 @@ class PatientWebControllerTest {
                     .hasStatusOk()
                     .bodyText()
                     .contains("TestBorderline")
+                    .contains("Male")
+                    .doesNotContain("MALE")
                     .contains("Not recorded")
                     .contains("No notes yet.");
         }
