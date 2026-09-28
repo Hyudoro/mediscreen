@@ -108,8 +108,9 @@ Everything goes through the gateway, under /api/v1:
 | GET /api/v1/notes?patientId={id} | lists a patient's notes, newest first, a page at a time |
 | POST /api/v1/notes               | adds a note to a patient's history                      |
 
-Lists take page and size parameters. A note is posted as JSON, with the
-patient's last name in the patient field:
+Lists take page and size parameters, and answer with the items in content next
+to number, size, totalElements and totalPages. A note is posted as JSON, with
+the patient's last name in the patient field:
 
 ```json
 { "patientId": 1, "patient": "TestNone", "note": "..." }
@@ -165,17 +166,16 @@ real PostgreSQL and a real MongoDB through Testcontainers. The build fails below
 
 ## Green code
 
-The brief asks for suggested actions to apply Green Code to this project, not for
-a report of work already done, so this section is a list of recommendations. Two
-questions come with it and are answered first.
+This section suggests actions that would lower the project's environmental cost.
+It first answers two questions: what Green Code is for, and how to find code
+that wastes memory.
 
 What Green Code is for. Software has a physical cost: the electricity a server
 draws while it runs, the electricity the client device draws while it renders a
 page, the data moved between the two, and the hardware that has to exist to run
 it. Green Code is the practice of keeping that cost down on purpose, by moving
 less data, doing less work per request, and running on smaller machines for
-longer. The environmental argument and the hosting bill point the same way, which
-is what makes it worth doing.
+longer. The environmental argument and the hosting bill point the same way.
 
 How to find code that wastes memory. Measure before changing anything. Java Flight
 Recorder and a heap dump taken under load show which allocations dominate and
@@ -190,18 +190,18 @@ that serialises an object at INFO on a path called on every request.
 
 Suggested actions, most worthwhile first:
 
-- Paginate every endpoint that returns a collection, and have the patient list
-  page ask for the page it displays rather than the whole table.
-- Return DTOs from controllers and select only the columns a DTO needs, so a
-  listing does not carry fields no page shows.
+- Keep every endpoint that returns a collection paginated, and keep each page of
+  the interface asking only for the rows it displays.
+- Select only the columns a response needs, with a projection, so a listing
+  does not load fields no page shows.
 - Compile the eleven search patterns once and stop the risk rules at the first
   match, rather than scanning a patient's notes once per term.
-- Index the access paths that are actually used: patientId on the notes
-  collection, and patient_id on address.
+- Keep every access path indexed, as patientId is on the notes collection and
+  patient_id on address, and index any new one when it appears.
 - Build the images in stages, copy the result into a JRE image rather than a JDK
   one, and keep the layered jar so a rebuild ships changed layers only.
-- Serve the pages from the server with hand-written CSS, no framework bundle and
-  no web font fetched from a third party.
+- Keep serving the pages from the server with hand-written CSS, no framework
+  bundle and no web font fetched from a third party.
 - Compress responses at the gateway.
 - Keep the architecture at what the specification asks for: five services and two
   databases, no service registry, no configuration server, no logging stack. Every
