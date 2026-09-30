@@ -12,7 +12,8 @@ Five Spring Boot services:
 - note-service: consultation notes, in MongoDB.
 - assessment-service: the risk level, computed from the other two. It has no
   database.
-- gateway-service: the single entry point for the API, on port 9000.
+- gateway-service: the single entry point for the API and its documentation,
+  on port 9000.
 - frontend-service: the web interface, on port 8080. It only talks to the
   gateway.
 
@@ -77,16 +78,11 @@ patients and the mongo container their nine notes.
 - Web interface: http://localhost:8080, user practitioner, password in
   secrets/ui-password.
 - API: http://localhost:9000.
+- API documentation: http://localhost:9000/swagger-ui.html, with a menu at the
+  top for each back service. To send requests from it, click Authorize and
+  sign in as mediscreen-service, password in secrets/service-password.
 
-These are the only two published ports, and only on this machine. To read a
-back service's API documentation, start a second copy of it with its port open:
-
-```sh
-docker compose run --rm -p 127.0.0.1:8081:8081 patient-service
-```
-
-Then open http://localhost:8081/swagger-ui.html. note-service uses port 8082
-and assessment-service 8083.
+These are the only two published ports, and only on this machine.
 
 To stop the stack:
 
