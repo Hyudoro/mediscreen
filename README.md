@@ -24,7 +24,8 @@ Testcontainers.
 
 ## Running it
 
-You need JDK 25 and Docker with Compose. The Maven wrapper is included.
+You need Docker with Compose. Building and testing on the host also needs
+JDK 25, and the Maven wrapper is included.
 
 Passwords are read from files in secrets/, which is not committed. Create them:
 
@@ -51,35 +52,55 @@ docker run --rm httpd:2.4-alpine \
 ```
 
 htpasswd prints the name and the hash, then an empty line. head and cut keep
-only the hash. A service refuses to start if a file it needs is missing.
+only the hash.
 
-For now the services run on the host, and Compose only starts the databases.
-Start them, then build and run the tests:
-
-```sh
-docker compose up -d postgres mongo
-./mvnw clean verify
-```
-
-Start each service in its own terminal, from the repository root:
+The services run as an unprivileged user in their containers, so each file must
+be readable by all. The folder stays readable by you only:
 
 ```sh
-java -jar patient-service/target/patient-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-java -jar note-service/target/note-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-java -jar assessment-service/target/assessment-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-java -jar gateway-service/target/gateway-service-0.0.1-SNAPSHOT.jar
-java -jar frontend-service/target/frontend-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+chmod 644 secrets/*
 ```
 
-The dev profile loads the client's four test patients, and the mongo container
-loads their nine notes on its first start.
+A service refuses to start if a file it needs is missing or unreadable.
+
+Build the images and start everything:
+
+```sh
+docker compose up --build
+```
+
+The first build takes longest, as it downloads Maven and the dependencies.
+Compose starts the databases, then each service once the ones it needs are
+healthy. On their first start, patient-service loads the client's four test
+patients and the mongo container their nine notes.
 
 - Web interface: http://localhost:8080, user practitioner, password in
   secrets/ui-password.
 - API: http://localhost:9000.
-- API documentation: http://localhost:8081/swagger-ui.html for patients,
-  http://localhost:8082/swagger-ui.html for notes and
-  http://localhost:8083/swagger-ui.html for assessments.
+
+These are the only two published ports, and only on this machine. To read a
+back service's API documentation, start a second copy of it with its port open:
+
+```sh
+docker compose run --rm -p 127.0.0.1:8081:8081 patient-service
+```
+
+Then open http://localhost:8081/swagger-ui.html. note-service uses port 8082
+and assessment-service 8083.
+
+To stop the stack:
+
+```sh
+docker compose down
+```
+
+Add -v to delete the databases' data as well.
+
+To build and run the tests on the host:
+
+```sh
+./mvnw clean verify
+```
 
 To build one service only:
 
@@ -193,8 +214,8 @@ Suggested actions, most useful first:
   only until the first match.
 - Keep an index on every lookup path, as patientId has on notes and patient_id
   on address, and add one for any new lookup.
-- Build the images in stages, on a JRE base rather than a JDK, with a layered
-  jar so that a rebuild ships only what changed.
+- Keep the images built in stages, on a JRE base rather than a JDK, with a
+  layered jar so that a rebuild ships only what changed.
 - Keep the pages server-rendered with hand-written CSS: no framework bundle, no
   third-party fonts.
 - Compress responses at the gateway.
@@ -213,8 +234,8 @@ Suggested actions, most useful first:
 ## Status
 
 Sprints 1 to 3 are done: patient records, notes and the diabetes risk, through
-the gateway and the web interface. Still to come: one Docker image per service
-with the whole stack in Compose, and a GitHub Actions pipeline.
+the gateway and the web interface. Each service runs in its own Docker image,
+and Compose starts the whole stack. Still to come: a GitHub Actions pipeline.
 
 ## More detail
 
