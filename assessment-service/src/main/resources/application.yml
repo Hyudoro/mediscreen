@@ -1,3 +1,47 @@
 spring:
   application:
     name: assessment-service
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8083
+
+mediscreen:
+  security:
+    username: mediscreen-service
+    password-hash: ${service-password-hash}
+  gateway:
+    uri: http://localhost:9000
+    username: mediscreen-service
+    password: ${service-password}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+---
+# Local development: the service runs on the host, beside the other services.
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
+
+---
+# In the compose stack: secrets are mounted as files and read as a config tree, so
+# no password ever enters the process environment.
+spring:
+  config:
+    activate:
+      on-profile: docker
+    import: "optional:configtree:/run/secrets/"
+mediscreen:
+  gateway:
+    uri: http://gateway-service:9000

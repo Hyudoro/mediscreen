@@ -1,0 +1,10 @@
+# Tests never read the mounted secrets. These stand-in values only let the context
+# start; the slice tests use a mock user and AssessmentApiIT sets a real hash.
+mediscreen:
+  security:
+    username: test-service
+    password-hash: "{noop}test-password"
+  gateway:
+    uri: http://localhost:9999
+    username: test-service
+    password: test-password

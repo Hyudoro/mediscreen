@@ -18,8 +18,6 @@ browser ──▶ frontend-service :8080   (web interface)
  postgres:18   mongo:8.3
 ```
 
-assessment-service is not built yet.
-
 ## 1. Deployment
 
 For now the services run on the host with the dev profile, and
@@ -50,8 +48,9 @@ note-service/mongo-init when its data directory is empty. The service creates
 the patientId index itself and does not write Spring Data's _class field, so
 every note has the same five fields. Notes are never trimmed or truncated.
 
-assessment-service will hold rules and no data: it reads patients and notes
-from the other two services.
+assessment-service: the risk rules, and no data. For each request it reads the
+patient and every page of their notes, and takes the patient's age on the day of
+the request.
 
 gateway-service: routes live under spring.cloud.gateway.server.webflux.routes.
 The older spring.cloud.gateway.routes is silently ignored. The gateway checks
@@ -63,8 +62,13 @@ Synchronous HTTP, with RestClient behind @HttpExchange interfaces:
 
 1. The front calls the gateway to build each page, with its own service
    account, never with the user's credentials.
-2. assessment-service will call the gateway, which forwards to patient-service
-   and note-service. Going through the gateway keeps the routing in one place.
+2. assessment-service calls the gateway, which forwards to patient-service and
+   note-service, with the same service account. Going through the gateway keeps
+   the routing in one place.
+
+When patient-service or note-service cannot answer, assessment-service returns
+a 502. When assessment-service cannot answer, the patient page still shows,
+with the risk level marked as not available.
 
 ## 4. Correlation id and logs
 
@@ -89,26 +93,31 @@ spring:
     password: ${postgres-password}
 ```
 
-| File                  | Read by                       |
-|-----------------------|-------------------------------|
-| postgres-password     | patient-service, postgres     |
-| mongo-password        | note-service, mongo           |
-| service-password-hash | patient-service, note-service |
-| service-password      | frontend-service              |
-| ui-password-hash      | frontend-service              |
+| File                  | Read by                                           |
+|-----------------------|---------------------------------------------------|
+| postgres-password     | patient-service, postgres                         |
+| mongo-password        | note-service, mongo                               |
+| service-password-hash | patient-service, note-service, assessment-service |
+| service-password      | frontend-service, assessment-service              |
+| ui-password-hash      | frontend-service                                  |
 
 ## 6. Layering
 
 patient-service and note-service share the same packages under
 com.mediscreen.<service>: controller, service, repository, domain, dto,
-exception and config. frontend-service has client, controller, dto and config.
+exception and config. assessment-service has client in place of repository,
+and its domain package holds the risk rules. frontend-service has client,
+controller, dto and config.
 
-In the two back services, ArchUnit fails the build when:
+In the three back services, ArchUnit fails the build when:
 
 - a layer calls upwards: controllers call services, services call repositories
-- a controller uses a repository
-- a controller depends on an entity or a document
+  or, in assessment-service, the HTTP clients
+- a controller uses a repository or an HTTP client
+- in patient-service and note-service, a controller depends on an entity or a
+  document
 - packages depend on each other in a cycle
+- in assessment-service, the risk rules depend on anything but the JDK
 
 Also followed, though the build does not check them: constructor injection,
 @Valid on every incoming DTO, DTOs as records with a static from(...) factory,
