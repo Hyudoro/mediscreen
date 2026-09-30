@@ -38,6 +38,11 @@ patient data:
 | postgres           | none           | 5432           |
 | mongo              | none           | 27017          |
 
+All traffic is plain HTTP, so anyone who sees it can read the HTTP Basic
+credentials in each request. The two ports therefore listen on this machine
+only, and serving the stack on a network would need HTTPS in front of the front
+and the gateway.
+
 Every container reports its health: the services through /actuator/health,
 the databases through their own client, over the network. Compose starts a
 container once those it depends on are healthy:
