@@ -20,28 +20,40 @@ browser ──▶ frontend-service :8080   (web interface)
 
 ## 1. Deployment
 
-For now the services run on the host with the dev profile, and
-docker-compose.yml starts only the two databases, on 127.0.0.1.
+Each service has its own image, built from its Dockerfile at the repository
+root: Maven builds the jar in a JDK stage, and the image runs it on
+eclipse-temurin:25-jre-alpine as an unprivileged user. docker-compose.yml
+starts the five services with the docker profile, and the two databases,
+postgres:18-alpine and mongo:8.3, on one network. Only the front and the
+gateway publish a host port, on 127.0.0.1, so the gateway is the only way in to
+patient data:
 
-The target layout is one image and one container per service, on one Compose
-network. Only the front and the gateway publish a host port, so the gateway is
-the only way in to patient data:
+| Container          | Host port      | Container port |
+|--------------------|----------------|----------------|
+| frontend-service   | 127.0.0.1:8080 | 8080           |
+| gateway-service    | 127.0.0.1:9000 | 9000           |
+| patient-service    | none           | 8081           |
+| note-service       | none           | 8082           |
+| assessment-service | none           | 8083           |
+| postgres           | none           | 5432           |
+| mongo              | none           | 27017          |
 
-| Container          | Image                         | Host port | Container port |
-|--------------------|-------------------------------|-----------|----------------|
-| frontend-service   | eclipse-temurin:25-jre-alpine | 8080      | 8080           |
-| gateway-service    | eclipse-temurin:25-jre-alpine | 9000      | 9000           |
-| patient-service    | eclipse-temurin:25-jre-alpine | none      | 8081           |
-| note-service       | eclipse-temurin:25-jre-alpine | none      | 8082           |
-| assessment-service | eclipse-temurin:25-jre-alpine | none      | 8083           |
-| postgres           | postgres:18-alpine            | none      | 5432           |
-| mongo              | mongo:8.3                     | none      | 27017          |
+Every container reports its health: the services through /actuator/health,
+the databases through their own client, over the network. Compose starts a
+container once those it depends on are healthy:
+
+- patient-service after postgres, and note-service after mongo
+- gateway-service after the three back services
+- frontend-service after gateway-service
+
+assessment-service calls the gateway only to answer a request, so it starts
+without waiting.
 
 ## 2. Services
 
 patient-service: Flyway creates the schema and Hibernate only validates it, so
 an entity that does not match the schema stops the startup. The four test
-patients are loaded only under the dev and docker profiles.
+patients are loaded only under the docker profile.
 
 note-service: the mongo container loads the test notes from
 note-service/mongo-init when its data directory is empty. The service creates
@@ -82,9 +94,10 @@ structured logging.
 ## 5. Configuration
 
 Each secret is a file, read as a configuration tree: the file name becomes the
-property name. The dev profile reads secrets/ from the working directory or its
-parent. The docker profile reads /run/secrets, where Compose mounts them.
-application.yml uses each secret by name, with no default:
+property name. The docker profile reads /run/secrets, where Compose mounts each
+file as it is on the host, owner and mode included, so the files must be
+readable by the services' unprivileged user. application.yml uses each secret
+by name, with no default:
 
 ```yaml
 spring:
