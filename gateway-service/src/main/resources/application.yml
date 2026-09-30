@@ -21,9 +21,47 @@ spring:
               uri: ${mediscreen.services.assessment-uri}
               predicates:
                 - Path=/api/v1/assessments/**
+            # Each service builds the server URL in its API description from the
+            # Host header, so keeping the caller's sends Try it out to the gateway.
+            - id: patient-service-api-docs
+              uri: ${mediscreen.services.patient-uri}
+              predicates:
+                - Path=/api-docs/patient-service
+              filters:
+                - SetPath=/v3/api-docs
+                - PreserveHostHeader
+            - id: note-service-api-docs
+              uri: ${mediscreen.services.note-uri}
+              predicates:
+                - Path=/api-docs/note-service
+              filters:
+                - SetPath=/v3/api-docs
+                - PreserveHostHeader
+            - id: assessment-service-api-docs
+              uri: ${mediscreen.services.assessment-uri}
+              predicates:
+                - Path=/api-docs/assessment-service
+              filters:
+                - SetPath=/v3/api-docs
+                - PreserveHostHeader
 
 server:
   port: 9000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: patient-service
+        url: /api-docs/patient-service
+      - name: note-service
+        url: /api-docs/note-service
+      - name: assessment-service
+        url: /api-docs/assessment-service
+    urls-primary-name: patient-service
+    # Keeps the sign-in in the browser's local storage. Without it, Swagger UI
+    # drops it whenever another service is picked in the menu.
+    persist-authorization: true
 
 mediscreen:
   services:

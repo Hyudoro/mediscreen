@@ -72,6 +72,11 @@ the request.
 gateway-service: routes live under spring.cloud.gateway.server.webflux.routes.
 The older spring.cloud.gateway.routes is silently ignored. The gateway checks
 no credentials: it forwards the Authorization header to the service behind it.
+It also serves the three back services' Swagger UI, at /swagger-ui.html, and
+fetches each service's API description at /api-docs/<service>. Those routes
+keep the caller's Host header, from which the service builds the server
+address in its description, so requests sent from the page go through the
+gateway as well.
 
 ## 3. Calls between services
 
