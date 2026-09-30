@@ -80,7 +80,9 @@ patients and the mongo container their nine notes.
 - API: http://localhost:9000.
 - API documentation: http://localhost:9000/swagger-ui.html, with a menu at the
   top for each back service. To send requests from it, click Authorize and
-  sign in as mediscreen-service, password in secrets/service-password.
+  sign in as mediscreen-service, password in secrets/service-password. The
+  sign-in covers all three services, and the browser keeps it in its local
+  storage until you click Logout.
 
 These are the only two published ports, and only on this machine.
 
