@@ -1,5 +1,6 @@
 package com.mediscreen.gateway;
 
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -18,8 +19,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 /**
- * The gateway in front of three stand-in services, each answering with its own name, the path it
- * received and the Authorization header it was given.
+ * The gateway in front of three stand-in services. Each answers with its own name, the path it
+ * received and the Authorization header it was given, or the Host header when asked for its API
+ * description.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DisplayName("The gateway's routes")
@@ -67,22 +69,45 @@ class RoutingTest {
                 .isEqualTo(service + " " + path + " Basic dGVzdDp0ZXN0");
     }
 
+    @ParameterizedTest(name = "{0} goes to {1}")
+    @DisplayName("fetch each service's API description, with the caller's Host header")
+    @CsvSource({
+        "/api-docs/patient-service, patient-service",
+        "/api-docs/note-service, note-service",
+        "/api-docs/assessment-service, assessment-service"
+    })
+    void fetchEachApiDescription(String path, String service) {
+        WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build()
+                .get()
+                .uri(path)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(String.class)
+                .isEqualTo(service + " /v3/api-docs localhost:" + port);
+    }
+
     private static HttpServer standIn(String name) {
         try {
             var server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-            server.createContext("/", exchange -> {
-                var body = (name + " " + exchange.getRequestURI() + " "
-                                + exchange.getRequestHeaders().getFirst(HttpHeaders.AUTHORIZATION))
-                        .getBytes(StandardCharsets.UTF_8);
-                exchange.sendResponseHeaders(200, body.length);
-                try (var out = exchange.getResponseBody()) {
-                    out.write(body);
-                }
-            });
+            server.createContext("/", exchange -> answer(exchange, name, HttpHeaders.AUTHORIZATION));
+            server.createContext("/v3/api-docs", exchange -> answer(exchange, name, HttpHeaders.HOST));
             server.start();
             return server;
         } catch (IOException exception) {
             throw new UncheckedIOException(exception);
+        }
+    }
+
+    private static void answer(HttpExchange exchange, String name, String header) throws IOException {
+        var body = (name + " " + exchange.getRequestURI() + " "
+                        + exchange.getRequestHeaders().getFirst(header))
+                .getBytes(StandardCharsets.UTF_8);
+        exchange.sendResponseHeaders(200, body.length);
+        try (var out = exchange.getResponseBody()) {
+            out.write(body);
         }
     }
 
