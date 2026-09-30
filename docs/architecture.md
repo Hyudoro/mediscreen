@@ -84,14 +84,17 @@ structured logging.
 Each secret is a file, read as a configuration tree: the file name becomes the
 property name. The dev profile reads secrets/ from the working directory or its
 parent. The docker profile reads /run/secrets, where Compose mounts them.
-application.yml uses each secret by name, with no default, so a missing secret
-stops the startup:
+application.yml uses each secret by name, with no default:
 
 ```yaml
 spring:
   datasource:
     password: ${postgres-password}
 ```
+
+Each service's main class lists the secret files it reads. Spring checks them
+before creating any of the service's beans, and when one is missing the startup
+stops with an error that names it.
 
 | File                  | Read by                                           |
 |-----------------------|---------------------------------------------------|
