@@ -55,6 +55,19 @@ class SwaggerUiTest {
                         """);
     }
 
+    @Test
+    @DisplayName("keeps the sign-in across the three services and page reloads")
+    void keepsTheSignIn() {
+        client().get()
+                .uri("/v3/api-docs/swagger-config")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.persistAuthorization")
+                .isEqualTo(true);
+    }
+
     private WebTestClient client() {
         return WebTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
     }

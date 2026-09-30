@@ -59,6 +59,9 @@ springdoc:
       - name: assessment-service
         url: /api-docs/assessment-service
     urls-primary-name: patient-service
+    # Keeps the sign-in in the browser's local storage. Without it, Swagger UI
+    # drops it whenever another service is picked in the menu.
+    persist-authorization: true
 
 mediscreen:
   services:
