@@ -33,16 +33,6 @@ logging:
       console: ecs
 
 ---
-# Local development: the databases run in Docker, the service runs on the host.
-spring:
-  config:
-    activate:
-      on-profile: dev
-    import: "optional:configtree:./secrets/,optional:configtree:../secrets/"
-  mongodb:
-    password: ${mongo-password}
-
----
 # In the compose stack: secrets are mounted as files and read as a config tree, so
 # no password ever enters the process environment.
 spring:
