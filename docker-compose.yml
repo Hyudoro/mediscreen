@@ -13,8 +13,15 @@ services:
       - postgres-data:/var/lib/postgresql
     networks:
       - app
-    ports:
-      - "127.0.0.1:5432:5432"
+    healthcheck:
+      # Asked over the network: the server the image runs while it initialises
+      # listens on a local socket only, so it never counts as ready.
+      test: ["CMD", "pg_isready", "--host=postgres", "--username=mediscreen", "--dbname=mediscreen"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      start_interval: 2s
+      retries: 3
 
   mongo:
     image: mongo:8.3
@@ -28,14 +35,104 @@ services:
       - ./note-service/mongo-init:/docker-entrypoint-initdb.d:ro
     networks:
       - app
+    healthcheck:
+      # Asked over the network: the server the image runs while it initialises
+      # listens on 127.0.0.1 only, so it never counts as ready.
+      test: ["CMD", "mongosh", "--quiet", "--host", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      start_interval: 2s
+      retries: 3
+
+  patient-service:
+    build:
+      context: .
+      dockerfile: patient-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    secrets:
+      - postgres-password
+      - service-password-hash
+    networks:
+      - app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  note-service:
+    build:
+      context: .
+      dockerfile: note-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    secrets:
+      - mongo-password
+      - service-password-hash
+    networks:
+      - app
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  assessment-service:
+    build:
+      context: .
+      dockerfile: assessment-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    secrets:
+      - service-password
+      - service-password-hash
+    networks:
+      - app
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - app
     ports:
-      - "127.0.0.1:27017:27017"
+      - "127.0.0.1:9000:9000"
+    depends_on:
+      patient-service:
+        condition: service_healthy
+      note-service:
+        condition: service_healthy
+      assessment-service:
+        condition: service_healthy
+
+  frontend-service:
+    build:
+      context: .
+      dockerfile: frontend-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    secrets:
+      - service-password
+      - ui-password-hash
+    networks:
+      - app
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      gateway-service:
+        condition: service_healthy
 
 secrets:
   postgres-password:
     file: ./secrets/postgres-password
   mongo-password:
     file: ./secrets/mongo-password
+  service-password:
+    file: ./secrets/service-password
+  service-password-hash:
+    file: ./secrets/service-password-hash
+  ui-password-hash:
+    file: ./secrets/ui-password-hash
 
 volumes:
   postgres-data:
