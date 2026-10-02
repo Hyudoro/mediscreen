@@ -58,8 +58,11 @@ class AssessmentControllerTest {
 
             var result = mvc.perform(get("/api/v1/assessments/3").with(user("tester")));
 
-            assertThat(result).hasStatusOk().hasContentType(MediaType.APPLICATION_JSON);
-            assertThat(result).bodyJson().isStrictlyEqualTo("""
+            assertThat(result)
+                    .hasStatusOk()
+                    .hasContentType(MediaType.APPLICATION_JSON)
+                    .bodyJson()
+                    .isStrictlyEqualTo("""
                     {"patientId":3,"riskLevel":"InDanger"}
                     """);
         }
