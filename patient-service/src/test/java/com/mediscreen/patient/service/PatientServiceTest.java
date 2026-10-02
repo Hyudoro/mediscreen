@@ -141,11 +141,9 @@ class PatientServiceTest {
         @DisplayName("fails and saves nothing when the id is unknown")
         void failsOnUnknownId() {
             given(repository.findById(99L)).willReturn(Optional.empty());
+            var request = new PatientRequest("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null);
 
-            assertThatThrownBy(() -> service.update(
-                            99L,
-                            new PatientRequest("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null)))
-                    .isInstanceOf(PatientNotFoundException.class);
+            assertThatThrownBy(() -> service.update(99L, request)).isInstanceOf(PatientNotFoundException.class);
 
             then(repository).should(never()).save(any());
         }
