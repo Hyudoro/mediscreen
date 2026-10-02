@@ -22,6 +22,7 @@ import com.mediscreen.frontend.dto.PatientPage;
 import com.mediscreen.frontend.dto.PatientView;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,10 +43,10 @@ import org.springframework.web.client.ResourceAccessException;
 class PatientWebControllerTest {
 
     private static final PatientView TEST_NONE = new PatientView(
-            1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), "FEMALE", "1 Brookside St", "100-222-3333");
+            1L, "Test", "TestNone", LocalDate.of(1966, Month.DECEMBER, 31), "FEMALE", "1 Brookside St", "100-222-3333");
 
     private static final PatientView TEST_BORDERLINE =
-            new PatientView(2L, "Test", "TestBorderline", LocalDate.of(1945, 6, 24), "MALE", null, null);
+            new PatientView(2L, "Test", "TestBorderline", LocalDate.of(1945, Month.JUNE, 24), "MALE", null, null);
 
     private static final NotePage NO_NOTES = new NotePage(List.of(), 0, 20, 0, 0);
 

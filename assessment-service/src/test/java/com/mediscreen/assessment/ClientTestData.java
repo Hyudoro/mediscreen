@@ -2,6 +2,7 @@ package com.mediscreen.assessment;
 
 import com.mediscreen.assessment.domain.Gender;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 /**
@@ -23,7 +24,7 @@ public final class ClientTestData {
             new TestPatient(
                     1,
                     "TestNone",
-                    LocalDate.of(1966, 12, 31),
+                    LocalDate.of(1966, Month.DECEMBER, 31),
                     Gender.FEMALE,
                     "1 Brookside St",
                     "100-222-3333",
@@ -32,7 +33,7 @@ public final class ClientTestData {
             new TestPatient(
                     2,
                     "TestBorderline",
-                    LocalDate.of(1945, 6, 24),
+                    LocalDate.of(1945, Month.JUNE, 24),
                     Gender.MALE,
                     "2 High St",
                     "200-333-4444",
@@ -44,7 +45,7 @@ public final class ClientTestData {
             new TestPatient(
                     3,
                     "TestInDanger",
-                    LocalDate.of(2004, 6, 18),
+                    LocalDate.of(2004, Month.JUNE, 18),
                     Gender.MALE,
                     "3 Club Road",
                     "300-444-5555",
@@ -56,7 +57,7 @@ public final class ClientTestData {
             new TestPatient(
                     4,
                     "TestEarlyOnset",
-                    LocalDate.of(2002, 6, 28),
+                    LocalDate.of(2002, Month.JUNE, 28),
                     Gender.FEMALE,
                     "4 Valley Dr",
                     "400-555-6666",

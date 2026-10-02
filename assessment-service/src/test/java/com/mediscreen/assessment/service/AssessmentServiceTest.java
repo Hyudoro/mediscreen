@@ -18,6 +18,7 @@ import com.mediscreen.assessment.exception.PatientNotFoundException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,7 @@ class AssessmentServiceTest {
     private static final Clock SEPTEMBER_2026 = Clock.fixed(Instant.parse("2026-09-28T10:00:00Z"), ZoneOffset.UTC);
 
     /** A man born in 2004, who is 22 in September 2026 and turns 30 on 18 June 2034. */
-    private static final Patient TEST_IN_DANGER = new Patient(3L, LocalDate.of(2004, 6, 18), Gender.MALE);
+    private static final Patient TEST_IN_DANGER = new Patient(3L, LocalDate.of(2004, Month.JUNE, 18), Gender.MALE);
 
     @Mock
     private PatientClient patientClient;

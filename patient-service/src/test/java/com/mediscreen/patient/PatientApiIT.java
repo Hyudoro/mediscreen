@@ -7,6 +7,7 @@ import com.mediscreen.patient.dto.PatientRequest;
 import com.mediscreen.patient.dto.PatientResponse;
 import com.mediscreen.patient.repository.PatientRepository;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -73,7 +74,12 @@ class PatientApiIT {
         var created = patients.post()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new PatientRequest(
-                        "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", null))
+                        "Test",
+                        "TestNone",
+                        LocalDate.of(1966, Month.DECEMBER, 31),
+                        Gender.FEMALE,
+                        "1 Brookside St",
+                        null))
                 .retrieve()
                 .toEntity(PatientResponse.class);
         var id = created.getBody().id();
@@ -86,7 +92,12 @@ class PatientApiIT {
                 .uri("/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(new PatientRequest(
-                        "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, null, "100-222-3333"))
+                        "Test",
+                        "TestNone",
+                        LocalDate.of(1966, Month.DECEMBER, 31),
+                        Gender.FEMALE,
+                        null,
+                        "100-222-3333"))
                 .retrieve()
                 .toBodilessEntity();
 
@@ -114,7 +125,8 @@ class PatientApiIT {
         for (var lastName : List.of("TestNone", "TestBorderline", "TestInDanger")) {
             patients.post()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(new PatientRequest("Test", lastName, LocalDate.of(1990, 1, 1), Gender.MALE, null, null))
+                    .body(new PatientRequest(
+                            "Test", lastName, LocalDate.of(1990, Month.JANUARY, 1), Gender.MALE, null, null))
                     .retrieve()
                     .toBodilessEntity();
         }
