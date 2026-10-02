@@ -41,7 +41,7 @@ public class AssessmentService {
     private Patient findPatient(long patientId) {
         try {
             return patientClient.get(patientId);
-        } catch (HttpClientErrorException.NotFound exception) {
+        } catch (HttpClientErrorException.NotFound _) {
             throw new PatientNotFoundException(patientId);
         }
     }
