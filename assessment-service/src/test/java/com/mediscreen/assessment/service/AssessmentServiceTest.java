@@ -96,14 +96,14 @@ class AssessmentServiceTest {
         @Test
         @DisplayName("takes the patient's age on the day of the assessment")
         void takesTheAgeOnTheDay() {
-            var service = new AssessmentService(
+            var serviceOnThirtiethBirthday = new AssessmentService(
                     patientClient, noteClient, Clock.fixed(Instant.parse("2034-06-18T10:00:00Z"), ZoneOffset.UTC));
             given(patientClient.get(3L)).willReturn(TEST_IN_DANGER);
             given(noteClient.list(eq(3L), eq(0), anyInt()))
                     .willReturn(page(1, "Le patient est fumeur", "Crises anormales, cholestérol élevé"));
 
             // The same three triggers, on his 30th birthday.
-            assertThat(service.assess(3L).riskLevel()).isEqualTo("Borderline");
+            assertThat(serviceOnThirtiethBirthday.assess(3L).riskLevel()).isEqualTo("Borderline");
         }
     }
 
