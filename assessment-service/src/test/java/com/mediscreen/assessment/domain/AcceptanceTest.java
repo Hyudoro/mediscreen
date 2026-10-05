@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.mediscreen.assessment.ClientTestData;
 import java.time.LocalDate;
+import java.time.Month;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -15,7 +16,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 @DisplayName("The client's four test patients")
 class AcceptanceTest {
 
-    private static final LocalDate TODAY = LocalDate.of(2026, 9, 28);
+    private static final LocalDate TODAY = LocalDate.of(2026, Month.SEPTEMBER, 28);
 
     @ParameterizedTest(name = "patient {0}: {1}")
     @DisplayName("get the level the sprint 3 sheet expects")

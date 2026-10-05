@@ -7,6 +7,7 @@ import com.mediscreen.patient.TestcontainersConfiguration;
 import com.mediscreen.patient.domain.Gender;
 import com.mediscreen.patient.domain.Patient;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -51,7 +52,12 @@ class PatientRepositoryIT {
         @DisplayName("stores the address in its own row")
         void storesTheAddress() {
             var saved = repository.saveAndFlush(new Patient(
-                    "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", "100-222-3333"));
+                    "Test",
+                    "TestNone",
+                    LocalDate.of(1966, Month.DECEMBER, 31),
+                    Gender.FEMALE,
+                    "1 Brookside St",
+                    "100-222-3333"));
 
             assertThat(repository.findById(saved.getId()))
                     .get()
@@ -62,7 +68,7 @@ class PatientRepositoryIT {
         @DisplayName("accepts a record with no address and no phone number")
         void acceptsARecordWithoutOptionalFields() {
             var saved = repository.saveAndFlush(
-                    new Patient("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null));
+                    new Patient("Jane", "Doe", LocalDate.of(1990, Month.JANUARY, 1), Gender.FEMALE, null, null));
 
             assertThat(repository.findById(saved.getId())).get().satisfies(patient -> {
                 assertThat(patient.getStreet()).isEmpty();
@@ -74,7 +80,7 @@ class PatientRepositoryIT {
         @DisplayName("round-trips the gender through the CHAR(1) column")
         void roundTripsTheGender() {
             var saved = repository.saveAndFlush(
-                    new Patient("John", "Doe", LocalDate.of(1990, 1, 1), Gender.MALE, null, null));
+                    new Patient("John", "Doe", LocalDate.of(1990, Month.JANUARY, 1), Gender.MALE, null, null));
 
             assertThat(repository.findById(saved.getId()))
                     .get()
@@ -85,7 +91,7 @@ class PatientRepositoryIT {
         @DisplayName("updates the address row in place rather than adding a second one")
         void updatesTheAddressInPlace() {
             var patient = repository.saveAndFlush(
-                    new Patient("Test", "One", LocalDate.of(1990, 1, 1), Gender.MALE, "1 street", null));
+                    new Patient("Test", "One", LocalDate.of(1990, Month.JANUARY, 1), Gender.MALE, "1 street", null));
 
             patient.setStreet("2 street");
             repository.saveAndFlush(patient);
@@ -107,9 +113,27 @@ class PatientRepositoryIT {
         @DisplayName("loads a page of patients and their addresses in one query")
         void loadsTheAddressesInTheSameQuery() {
             repository.saveAllAndFlush(List.of(
-                    new Patient("Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", null),
-                    new Patient("Test", "TestBorderline", LocalDate.of(1945, 6, 24), Gender.MALE, "2 High St", null),
-                    new Patient("Test", "TestInDanger", LocalDate.of(2004, 6, 18), Gender.MALE, "3 Club Road", null)));
+                    new Patient(
+                            "Test",
+                            "TestNone",
+                            LocalDate.of(1966, Month.DECEMBER, 31),
+                            Gender.FEMALE,
+                            "1 Brookside St",
+                            null),
+                    new Patient(
+                            "Test",
+                            "TestBorderline",
+                            LocalDate.of(1945, Month.JUNE, 24),
+                            Gender.MALE,
+                            "2 High St",
+                            null),
+                    new Patient(
+                            "Test",
+                            "TestInDanger",
+                            LocalDate.of(2004, Month.JUNE, 18),
+                            Gender.MALE,
+                            "3 Club Road",
+                            null)));
             entityManager.clear();
             var statistics = sessionFactory.getStatistics();
             statistics.clear();
@@ -142,7 +166,7 @@ class PatientRepositoryIT {
         @DisplayName("refuses a second address for the same patient")
         void refusesASecondAddress() {
             var patient = repository.saveAndFlush(
-                    new Patient("Test", "One", LocalDate.of(1990, 1, 1), Gender.FEMALE, "1 street", null));
+                    new Patient("Test", "One", LocalDate.of(1990, Month.JANUARY, 1), Gender.FEMALE, "1 street", null));
 
             assertThatThrownBy(() -> jdbcClient
                             .sql("INSERT INTO address (patient_id, street) VALUES (?, '2 Street')")

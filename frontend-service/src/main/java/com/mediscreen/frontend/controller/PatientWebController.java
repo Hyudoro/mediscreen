@@ -27,6 +27,10 @@ public class PatientWebController {
 
     private static final int PAGE_SIZE = 20;
 
+    private static final String REDIRECT_TO_PATIENT = "redirect:/patients/";
+    private static final String PATIENT_FORM_VIEW = "patients/form";
+    private static final String PATIENT_ID_ATTRIBUTE = "patientId";
+
     private final PatientClient patientClient;
     private final NoteClient noteClient;
     private final AssessmentClient assessmentClient;
@@ -61,41 +65,41 @@ public class PatientWebController {
             return detailPage(patient, 0, model);
         }
         noteClient.add(new NoteRequest(id, patient.lastName(), noteForm.getNote()));
-        return "redirect:/patients/" + id;
+        return REDIRECT_TO_PATIENT + id;
     }
 
     @GetMapping("/patients/new")
     public String addForm(Model model) {
         model.addAttribute("patientForm", new PatientForm());
-        model.addAttribute("patientId", null);
-        return "patients/form";
+        model.addAttribute(PATIENT_ID_ATTRIBUTE, null);
+        return PATIENT_FORM_VIEW;
     }
 
     @PostMapping("/patients")
     public String add(@Valid PatientForm patientForm, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
-            model.addAttribute("patientId", null);
-            return "patients/form";
+            model.addAttribute(PATIENT_ID_ATTRIBUTE, null);
+            return PATIENT_FORM_VIEW;
         }
         var created = patientClient.create(patientForm);
-        return "redirect:/patients/" + created.id();
+        return REDIRECT_TO_PATIENT + created.id();
     }
 
     @GetMapping("/patients/{id}/edit")
     public String editForm(@PathVariable long id, Model model) {
         model.addAttribute("patientForm", PatientForm.from(patientClient.get(id)));
-        model.addAttribute("patientId", id);
-        return "patients/form";
+        model.addAttribute(PATIENT_ID_ATTRIBUTE, id);
+        return PATIENT_FORM_VIEW;
     }
 
     @PostMapping("/patients/{id}")
     public String edit(@PathVariable long id, @Valid PatientForm patientForm, BindingResult binding, Model model) {
         if (binding.hasErrors()) {
-            model.addAttribute("patientId", id);
-            return "patients/form";
+            model.addAttribute(PATIENT_ID_ATTRIBUTE, id);
+            return PATIENT_FORM_VIEW;
         }
         patientClient.update(id, patientForm);
-        return "redirect:/patients/" + id;
+        return REDIRECT_TO_PATIENT + id;
     }
 
     private String detailPage(PatientView patient, int notesPage, Model model) {

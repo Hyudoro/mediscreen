@@ -153,20 +153,17 @@ Suggested actions, most useful first:
 - Paginate every new collection endpoint, and index every new lookup.
 - Select only the columns a response needs, with projections.
 - Compress responses at the gateway.
-- Run SonarQube and ecoCode from their own compose file, outside the everyday
-  start.
-- In CI, cache the Maven repository and the Testcontainers images, and run on
-  push and pull request only.
+- Cache the Maven repository and the Testcontainers images in CI.
 - Build native images, if startup time and idle memory matter more than a
   simple build.
 - Cache assessment results, if a briefly stale risk level is acceptable.
-- Measure each change before and after, with ecoCode, image sizes and memory
-  use.
+- Measure each change before and after, with the Creedengo rules, image sizes
+  and memory use.
 
 ## Status
 
-Sprints 1 to 3 are done, and the stack runs in Docker. Next: a GitHub Actions
-pipeline.
+Sprints 1 to 3 are done, the stack runs in Docker, and CI builds and tests
+every push to main and every pull request.
 
 ## Docs
 

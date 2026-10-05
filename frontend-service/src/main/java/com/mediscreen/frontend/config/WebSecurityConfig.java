@@ -23,7 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class WebSecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain filterChain(HttpSecurity http) {
         return http.authorizeHttpRequests(
                         requests -> requests.requestMatchers("/login", "/css/**", "/actuator/health/**")
                                 .permitAll()

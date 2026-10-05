@@ -20,6 +20,7 @@ import com.mediscreen.patient.dto.PatientResponse;
 import com.mediscreen.patient.exception.PatientNotFoundException;
 import com.mediscreen.patient.service.PatientService;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,7 +43,13 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 class PatientControllerTest {
 
     private static final PatientResponse TEST_NONE = new PatientResponse(
-            1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", "100-222-3333");
+            1L,
+            "Test",
+            "TestNone",
+            LocalDate.of(1966, Month.DECEMBER, 31),
+            Gender.FEMALE,
+            "1 Brookside St",
+            "100-222-3333");
 
     private static final String UPDATE = """
             {"firstName":"Test","lastName":"TestNone","birthDate":"1966-12-31","gender":"FEMALE","street":"9 New Road"}
@@ -167,7 +174,7 @@ class PatientControllerTest {
         void acceptsOptionalFieldsMissing() {
             given(service.create(any()))
                     .willReturn(new PatientResponse(
-                            5L, "Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null));
+                            5L, "Jane", "Doe", LocalDate.of(1990, Month.JANUARY, 1), Gender.FEMALE, null, null));
 
             var body = """
                     {"firstName":"Jane","lastName":"Doe","birthDate":"1990-01-01","gender":"FEMALE"}
@@ -185,7 +192,13 @@ class PatientControllerTest {
         void updatesAPatient() {
             given(service.update(eq(1L), any()))
                     .willReturn(new PatientResponse(
-                            1L, "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "9 New Road", null));
+                            1L,
+                            "Test",
+                            "TestNone",
+                            LocalDate.of(1966, Month.DECEMBER, 31),
+                            Gender.FEMALE,
+                            "9 New Road",
+                            null));
 
             assertThat(mvc.perform(put("/api/v1/patients/1")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +214,12 @@ class PatientControllerTest {
                     .update(
                             1L,
                             new PatientRequest(
-                                    "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "9 New Road", null));
+                                    "Test",
+                                    "TestNone",
+                                    LocalDate.of(1966, Month.DECEMBER, 31),
+                                    Gender.FEMALE,
+                                    "9 New Road",
+                                    null));
         }
 
         @Test

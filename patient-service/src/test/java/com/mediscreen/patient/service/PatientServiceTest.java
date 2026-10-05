@@ -13,6 +13,7 @@ import com.mediscreen.patient.dto.PatientRequest;
 import com.mediscreen.patient.exception.PatientNotFoundException;
 import com.mediscreen.patient.repository.PatientRepository;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,12 @@ class PatientServiceTest {
 
     private static Patient testNone() {
         return new Patient(
-                "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "1 Brookside St", "100-222-3333");
+                "Test",
+                "TestNone",
+                LocalDate.of(1966, Month.DECEMBER, 31),
+                Gender.FEMALE,
+                "1 Brookside St",
+                "100-222-3333");
     }
 
     @Nested
@@ -95,7 +101,7 @@ class PatientServiceTest {
             given(repository.save(any(Patient.class))).willAnswer(call -> call.getArgument(0));
 
             var response = service.create(
-                    new PatientRequest("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null));
+                    new PatientRequest("Jane", "Doe", LocalDate.of(1990, Month.JANUARY, 1), Gender.FEMALE, null, null));
 
             assertThat(response.street()).isNull();
             assertThat(response.phoneNumber()).isNull();
@@ -119,7 +125,12 @@ class PatientServiceTest {
             var response = service.update(
                     1L,
                     new PatientRequest(
-                            "Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "9 New Road", "111"));
+                            "Test",
+                            "TestNone",
+                            LocalDate.of(1966, Month.DECEMBER, 31),
+                            Gender.FEMALE,
+                            "9 New Road",
+                            "111"));
 
             assertThat(response.street()).isEqualTo("9 New Road");
             assertThat(response.phoneNumber()).isEqualTo("111");
@@ -132,7 +143,9 @@ class PatientServiceTest {
             given(repository.save(any(Patient.class))).willAnswer(call -> call.getArgument(0));
 
             var response = service.update(
-                    1L, new PatientRequest("Test", "TestNone", LocalDate.of(1966, 12, 31), Gender.FEMALE, "  ", null));
+                    1L,
+                    new PatientRequest(
+                            "Test", "TestNone", LocalDate.of(1966, Month.DECEMBER, 31), Gender.FEMALE, "  ", null));
 
             assertThat(response.street()).isNull();
         }
@@ -141,11 +154,10 @@ class PatientServiceTest {
         @DisplayName("fails and saves nothing when the id is unknown")
         void failsOnUnknownId() {
             given(repository.findById(99L)).willReturn(Optional.empty());
+            var request =
+                    new PatientRequest("Jane", "Doe", LocalDate.of(1990, Month.JANUARY, 1), Gender.FEMALE, null, null);
 
-            assertThatThrownBy(() -> service.update(
-                            99L,
-                            new PatientRequest("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, null, null)))
-                    .isInstanceOf(PatientNotFoundException.class);
+            assertThatThrownBy(() -> service.update(99L, request)).isInstanceOf(PatientNotFoundException.class);
 
             then(repository).should(never()).save(any());
         }

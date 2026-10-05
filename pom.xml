@@ -38,6 +38,7 @@
 		<palantir-java-format.version>2.100.0</palantir-java-format.version>
 		<pitest-maven.version>1.30.0</pitest-maven.version>
 		<pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
+		<sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
 		<archunit.version>1.5.1</archunit.version>
 	</properties>
 
@@ -259,6 +260,11 @@
 							<version>${pitest-junit5-plugin.version}</version>
 						</dependency>
 					</dependencies>
+				</plugin>
+				<plugin>
+					<groupId>org.sonarsource.scanner.maven</groupId>
+					<artifactId>sonar-maven-plugin</artifactId>
+					<version>${sonar-maven-plugin.version}</version>
 				</plugin>
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
