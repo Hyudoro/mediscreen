@@ -1,5 +1,7 @@
 # Mediscreen
 
+[![CI](https://github.com/Hyudoro/mediscreen/actions/workflows/ci.yml/badge.svg)](https://github.com/Hyudoro/mediscreen/actions/workflows/ci.yml)
+
 Mediscreen helps doctors spot patients at risk of type 2 diabetes. It stores
 patient records and consultation notes, and rates each patient's risk from
 their notes, age and sex.
