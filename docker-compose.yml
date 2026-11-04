@@ -28,6 +28,9 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: mediscreen
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo-password
+      # mongod refuses to start on Linux 6.19 to 7.0.13 while TCMalloc uses its
+      # per-CPU caches. With rseq left to glibc it does not use them, on any kernel.
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
     secrets:
       - mongo-password
     volumes:
